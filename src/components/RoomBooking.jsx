@@ -239,7 +239,7 @@ const RoomBooking = () => {
 
                 {/* GSAP isko letters me tod ke animate karta hai on mount */}
                 <h1 ref={titleRef} className='relative z-10 font-semibold text-[clamp(2.4rem,7vw,5rem)] leading-[1.05] max-w-[16ch]'>
-                    Rooms built around fire
+                    Rooms Service 
                 </h1>
 
                 {/* rb-subtitle / rb-hero-cta — sirf class names hain jo GSAP target karta hai */}
