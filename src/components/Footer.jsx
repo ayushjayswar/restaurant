@@ -137,11 +137,11 @@ const Footer = () => {
                             </li>
 
                              <li>
-                                <a href="#room-booking">Room-Booking</a>
+                                <a href="#room-booking">Room</a>
                             </li>
 
                             <li>
-                                <a href="#reservation">Table-Reservation</a>
+                                <a href="#reservation">Reservation</a>
                             </li>
 
                         </ul>
