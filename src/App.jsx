@@ -8,10 +8,12 @@ import Menu from './components/Menu';
 import Reservation from './components/Reservation';
 import Contact from './components/Contact';
 import RoomBooking from './components/RoomBooking';
+import ScrollToTop from "./components/ScrollToTop";
 
 const App = () => {
   return (
     <div>
+      <ScrollToTop />
       <Navbar/>
       <Routes>
 
