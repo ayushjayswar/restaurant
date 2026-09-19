@@ -9,11 +9,13 @@ import Reservation from './components/Reservation';
 import Contact from './components/Contact';
 import RoomBooking from './components/RoomBooking';
 import ScrollToTop from "./components/ScrollToTop";
+import InstallPrompt from "./components/InstallPrompt";
 
 const App = () => {
   return (
     <div>
       <ScrollToTop />
+      <InstallPrompt />
       <Navbar/>
       <Routes>
 
