@@ -137,7 +137,7 @@ const Footer = () => {
                             </li>
 
                              <li>
-                                <a href="/room-booking">Room</a>
+                                <a href="/roombooking">Room</a>
                             </li>
 
                             <li>

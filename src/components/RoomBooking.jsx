@@ -264,7 +264,7 @@ export default function RoomBooking() {
   };
 
   return (
-    <div id='room-booking'
+    <div 
       ref={rootRef}
       className="bg-[#17110D] text-[#F4EFE6] font-[Inter,system-ui,sans-serif] overflow-x-hidden"
     >
