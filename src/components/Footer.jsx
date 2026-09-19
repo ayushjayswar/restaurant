@@ -136,8 +136,12 @@ const Footer = () => {
                                 <a href="#menu">Menu</a>
                             </li>
 
+                             <li>
+                                <a href="#room-booking">Room-Booking</a>
+                            </li>
+
                             <li>
-                                <a href="#reservation">Reservation</a>
+                                <a href="#reservation">Table-Reservation</a>
                             </li>
 
                         </ul>
