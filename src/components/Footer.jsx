@@ -144,6 +144,10 @@ const Footer = () => {
                                 <a href="/reservation">Reservation</a>
                             </li>
 
+                            <li>
+                                <a href="/contact">Contact</a>
+                            </li>
+
                         </ul>
                     </div>
 
