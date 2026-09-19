@@ -147,7 +147,7 @@ const Footer = () => {
 
                     <div ref={col3Ref} className='w-56'>
                         <h1 className='font-semibold text-xl
-                        mb-4  text-white text-center'>Contact Info</h1>
+                        mb-4  text-white '>Contact Info</h1>
                         <p className='font-semibold  text-white'>
                            Ujjain Nagri
                             info@forkandflame.com
@@ -157,7 +157,7 @@ const Footer = () => {
                     {/* fourth */}
 
                     <div ref={col4Ref} className=' items-center gap-4 mb-6'>
-                        <h1 className=' text-xl  text-white font-semibold mb-4 text-center'>Follow Us</h1>
+                        <h1 className=' text-xl  text-white font-semibold mb-4 '>Follow Us</h1>
 
                         <div ref={iconsRef} className='flex items-center gap-4 mb-6 '>
 
