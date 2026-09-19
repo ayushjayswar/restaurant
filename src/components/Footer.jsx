@@ -122,7 +122,7 @@ const Footer = () => {
                     <div ref={col2Ref} className='w-56 '>
                         <h1 className='text-xl  text-white font-semibold mb-4'>Quick Link</h1>
 
-                        <ul className='grid font-semibold text-xl text-white'>
+                        <ul className='font-semibold text-xl text-white'>
 
                             <li>
                                 <a href="/home">Home</a>
