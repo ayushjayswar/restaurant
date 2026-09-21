@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes , Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./Pages/Home";
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -13,10 +13,15 @@ import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 
 const App = () => {
+  const location = useLocation();
+
+  // In routes par Navbar/Footer nahi dikhana
+  const hideLayout = location.pathname === "/login" || location.pathname === "/signup";
+
   return (
     <div>
       <ScrollToTop />
-      <Navbar/>
+      {!hideLayout && <Navbar />}
       <Routes>
 
         <Route path='/' element={<Home/>}/>
@@ -29,7 +34,7 @@ const App = () => {
         <Route path='/signup' element={<Signup/>}/>
 
       </Routes>
-      <Footer />
+      {!hideLayout && <Footer />}
     </div>
   )
 }
