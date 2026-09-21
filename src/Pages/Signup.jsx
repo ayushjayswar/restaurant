@@ -7,7 +7,8 @@ const BG_IMAGE =
 
 // FastAPI backend ka URL - agar backend kisi doosre port/host par ho to yahan badal do
 // const API_URL = "http://localhost:8000";
-const API_URL = "http://15.206.149.37:8080";
+// const API_URL = "http://15.206.149.37:8080";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
 
 export default function Signup({ onSignupSuccess }) {
   const navigate = useNavigate();
