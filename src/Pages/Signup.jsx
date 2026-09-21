@@ -6,8 +6,6 @@ const BG_IMAGE =
   "https://plus.unsplash.com/premium_photo-1661964071015-d97428970584?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0";
 
 // FastAPI backend ka URL - agar backend kisi doosre port/host par ho to yahan badal do
-// const API_URL = "http://localhost:8000";
-// const API_URL = "http://15.206.149.37:8080";
 const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
 
 export default function Signup({ onSignupSuccess }) {
@@ -59,20 +57,20 @@ export default function Signup({ onSignupSuccess }) {
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center bg-cover bg-center px-4"
+      className="flex-1 w-full flex items-center justify-center bg-cover bg-center px-4"
       style={{ backgroundImage: `url(${BG_IMAGE})` }}
     >
       <div className="absolute inset-0 bg-black/40" />
 
-      <div className="relative w-full max-w-sm rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl px-8 py-10">
+      <div className="relative w-full max-w-sm rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl px-6 py-6">
         <h1 className="text-2xl font-semibold text-white text-center">
           Create account
         </h1>
-        <p className="text-sm text-white/70 text-center mt-1 mb-8">
+        <p className="text-sm text-white/70 text-center mt-1 mb-5">
           Sign up to get started
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-white/80 mb-1">
               Full name
@@ -82,7 +80,7 @@ export default function Signup({ onSignupSuccess }) {
               value={form.name}
               onChange={handleChange("name")}
               placeholder="Your name"
-              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2.5 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
+              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
               autoComplete="name"
             />
           </div>
@@ -96,7 +94,7 @@ export default function Signup({ onSignupSuccess }) {
               value={form.username}
               onChange={handleChange("username")}
               placeholder="username"
-              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2.5 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
+              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
               autoComplete="username"
             />
           </div>
@@ -110,7 +108,7 @@ export default function Signup({ onSignupSuccess }) {
               value={form.email}
               onChange={handleChange("email")}
               placeholder="you@example.com"
-              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2.5 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
+              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
               autoComplete="email"
             />
           </div>
@@ -124,7 +122,7 @@ export default function Signup({ onSignupSuccess }) {
               value={form.password}
               onChange={handleChange("password")}
               placeholder="••••••••"
-              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2.5 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
+              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
               autoComplete="new-password"
             />
           </div>
@@ -149,7 +147,7 @@ export default function Signup({ onSignupSuccess }) {
           </button>
         </form>
 
-        <p className="text-sm text-white/70 text-center mt-6">
+        <p className="text-sm text-white/70 text-center mt-4">
           Already have an account?{" "}
           <button
             type="button"

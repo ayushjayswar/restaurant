@@ -15,26 +15,28 @@ import Signup from "./Pages/Signup";
 const App = () => {
   const location = useLocation();
 
-  // In routes par Navbar/Footer nahi dikhana
-  const hideLayout = location.pathname === "/login" || location.pathname === "/signup";
+  // Sirf Footer hide karna hai in routes par, Navbar hamesha dikhega
+  const hideFooter = location.pathname === "/login" || location.pathname === "/signup";
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <ScrollToTop />
-      {!hideLayout && <Navbar />}
-      <Routes>
+      <Navbar />
+      <main className="flex-1 flex flex-col">
+        <Routes>
 
-        <Route path='/' element={<Home/>}/>
-        <Route path='/about' element={<About/>}/>
-        <Route path='/menu' element={<Menu/>}/>
-        <Route path='/reservation' element={<Reservation/>}/>
-        <Route path='/roombooking' element={<RoomBooking/>}/>
-        <Route path='/contact' element={<Contact/>}/>
-        <Route path='/login' element={<Login/>}/>
-        <Route path='/signup' element={<Signup/>}/>
+          <Route path='/' element={<Home/>}/>
+          <Route path='/about' element={<About/>}/>
+          <Route path='/menu' element={<Menu/>}/>
+          <Route path='/reservation' element={<Reservation/>}/>
+          <Route path='/roombooking' element={<RoomBooking/>}/>
+          <Route path='/contact' element={<Contact/>}/>
+          <Route path='/login' element={<Login/>}/>
+          <Route path='/signup' element={<Signup/>}/>
 
-      </Routes>
-      {!hideLayout && <Footer />}
+        </Routes>
+      </main>
+      {!hideFooter && <Footer />}
     </div>
   )
 }
