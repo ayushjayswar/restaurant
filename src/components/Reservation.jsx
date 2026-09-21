@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import InputField from "../components/InputField";
 import SelectInput from "../components/SelectInput";
 import { timeOptions } from "../assets/time";
@@ -9,6 +11,9 @@ import BookingModal from '../components/BookingModal';
 import { sendReservation } from '../services/Reservation';
 
 const Reservation = () => {
+
+  const navigate = useNavigate();
+  const { requireAuth } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -37,6 +42,9 @@ const Reservation = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Login check - agar user login nahi hai to yahi rok denge
+    if (!requireAuth(navigate)) return;
 
     setLoading(true);
 

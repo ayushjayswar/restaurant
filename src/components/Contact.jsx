@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { FaLocationArrow, FaPhoneAlt } from "react-icons/fa";
 import { MdEmail, MdTimer } from "react-icons/md";
 import InputField from './InputField';
@@ -6,6 +8,9 @@ import Textarea from "../components/Textarea";
 import { sendContactEmail } from '../services/emailService';
 
 const Contact = () => {
+
+    const navigate = useNavigate();
+    const { requireAuth } = useAuth();
 
     const [FormData, setFormData] = useState({
         fullname: '',
@@ -27,6 +32,9 @@ const Contact = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Login check - agar user login nahi hai to yahi rok denge
+        if (!requireAuth(navigate)) return;
 
         if (!FormData.fullname || !FormData.email || !FormData.subject || !FormData.message) {
             alert("Please fill all infomation");

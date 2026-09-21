@@ -6,6 +6,7 @@ const STORAGE_KEY = "auth_user";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [toast, setToast] = useState(null); // { message, type }
 
   // Page refresh hone par bhi login bana rahe, isliye localStorage se restore karo
   useEffect(() => {
@@ -19,6 +20,11 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2500);
+  };
+
   const login = (userData) => {
     setUser(userData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
@@ -29,8 +35,18 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  // Action se pehle login check karne ke liye - agar login nahi hai to false return karega
+  const requireAuth = (navigate) => {
+    if (!user) {
+      showToast("Pehle login ya signup karo!", "error");
+      navigate("/login");
+      return false;
+    }
+    return true;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, toast, showToast, requireAuth }}>
       {children}
     </AuthContext.Provider>
   );
