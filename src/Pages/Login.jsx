@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const BG_IMAGE =
   "https://plus.unsplash.com/premium_photo-1661964071015-d97428970584?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0";
@@ -9,6 +10,7 @@ const API_URL = "http://localhost:8000";
 
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [identifier, setIdentifier] = useState(""); // email ya username
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +36,7 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
+      login(result.user); // global auth state update - Navbar ko turant pata chal jayega
       if (onLoginSuccess) onLoginSuccess(result.user);
       navigate("/"); // login ke baad homepage par bhej do
     } catch (err) {

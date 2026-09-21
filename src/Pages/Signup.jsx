@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const BG_IMAGE =
   "https://plus.unsplash.com/premium_photo-1661964071015-d97428970584?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0";
@@ -9,6 +10,7 @@ const API_URL = "http://localhost:8000";
 
 export default function Signup({ onSignupSuccess }) {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({
     name: "",
     username: "",
@@ -42,9 +44,10 @@ export default function Signup({ onSignupSuccess }) {
         return;
       }
 
-      setSuccess("Account created! Redirecting to login...");
+      setSuccess("Account created!");
+      login(result.user); // signup hote hi login state bhi set kar do
       if (onSignupSuccess) onSignupSuccess(result.user);
-      setTimeout(() => navigate("/login"), 1200); // thoda ruk ke login page bhejo
+      setTimeout(() => navigate("/"), 800); // seedha homepage par bhej do
     } catch (err) {
       setError("Server se connect nahi ho paya. Kya backend chal raha hai?");
     } finally {
