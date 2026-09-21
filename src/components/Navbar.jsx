@@ -40,13 +40,41 @@ const Navbar = () => {
                         <Link className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/contact">
                             Contact</Link>
 
-                        
+                        {/* Login / Signup - desktop nav ke andar */}
+                        <div className='flex items-center gap-3 pl-4 ml-2 border-l border-blue-950/20'>
+                            <Link
+                                className='bg-red-600 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-red-700 hover:scale-105 duration-300 active:scale-95'
+                                to="/login"
+                            >
+                                Login
+                            </Link>
 
-                      
+                            <Link
+                                className='bg-red-600 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-red-700 hover:scale-105 duration-300 active:scale-95'
+                                to="/signup"
+                            >
+                                Sign up
+                            </Link>
+                        </div>
 
                     </nav>
-                    {/* mobile menu create  */}
-                    <div className='md:hidden'>
+
+                    {/* mobile: Login/Signup + hamburger - hamesha direct dikhega, dropdown ke andar nahi */}
+                    <div className='md:hidden flex items-center gap-2'>
+                        <Link
+                            to="/login"
+                            className='border-2 border-red-600 text-red-600 text-sm px-3 py-1 rounded-full font-semibold hover:bg-red-600 hover:text-white duration-300'
+                        >
+                            Login
+                        </Link>
+
+                        <Link
+                            to="/signup"
+                            className='bg-red-600 text-white text-sm px-3 py-1.5 rounded-full font-semibold hover:bg-red-700 duration-300'
+                        >
+                            Sign up
+                        </Link>
+
                         {
                             showMenu ?
                                 <FaXmark onClick={() => setshowMenu(!showMenu)} className='text-xl cursor-pointer ' /> :

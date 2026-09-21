@@ -9,13 +9,13 @@ import Reservation from './components/Reservation';
 import Contact from './components/Contact';
 import RoomBooking from './components/RoomBooking';
 import ScrollToTop from "./components/ScrollToTop";
-import InstallPrompt from "./components/InstallPrompt";
+import Login from "./Pages/Login";
+import Signup from "./Pages/Signup";
 
 const App = () => {
   return (
     <div>
       <ScrollToTop />
-      <InstallPrompt />
       <Navbar/>
       <Routes>
 
@@ -25,6 +25,8 @@ const App = () => {
         <Route path='/reservation' element={<Reservation/>}/>
         <Route path='/roombooking' element={<RoomBooking/>}/>
         <Route path='/contact' element={<Contact/>}/>
+        <Route path='/login' element={<Login/>}/>
+        <Route path='/signup' element={<Signup/>}/>
 
       </Routes>
       <Footer />
