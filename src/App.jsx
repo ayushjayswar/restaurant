@@ -9,6 +9,7 @@ import Reservation from './components/Reservation';
 import Contact from './components/Contact';
 import RoomBooking from './components/RoomBooking';
 import ScrollToTop from "./components/ScrollToTop";
+import InstallPrompt from "./components/InstallPrompt";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import { useAuth } from "./context/AuthContext";
@@ -23,6 +24,7 @@ const App = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <ScrollToTop />
+      <InstallPrompt />
 
       {toast && (
         <div
