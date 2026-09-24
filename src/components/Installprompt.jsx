@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom'
 import { FaXmark } from "react-icons/fa6"
 import { FaDownload } from "react-icons/fa"
 
-// public folder wali file ka naam: Fork&Flame.apk  (& ko URL mein %26 likhte hain)
-const APK_URL = '/Fork%26Flame.apk'
+// public folder mein file ka naam bilkul ForkFlame.apk hona chahiye
+const APK_URL = '/ForkFlame.apk'
 const APK_DOWNLOAD_NAME = 'ForkFlame.apk'
 
 const InstallPrompt = () => {
