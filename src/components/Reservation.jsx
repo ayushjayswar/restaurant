@@ -12,7 +12,8 @@ import { sendReservationRequest } from "../services/emailService";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const API_URL = "http://127.0.0.1:8000";
+// const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com/";
 
 // Input / select ki common styling (RoomBooking jaisi dark theme)
 const fieldClass =
