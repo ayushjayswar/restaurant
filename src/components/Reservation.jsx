@@ -8,11 +8,12 @@ import { timeOptions } from "../assets/time";
 import { partySizeOptions } from "../assets/PartySize";
 import { tableRefOptions } from "../assets/TableRef";
 import BookingModal from "../components/BookingModal";
-import { sendReservationRequest } from "../services/emailService";
+import { sendReservationRequest } from "../services/EmailService";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const API_URL = "http://127.0.0.1:8000";
+// const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
 
 // Input / select ki common styling (RoomBooking jaisi dark theme)
 const fieldClass =

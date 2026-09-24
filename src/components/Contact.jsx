@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useAuth } from "../context/AuthContext";
 import { FaLocationArrow, FaPhoneAlt } from "react-icons/fa";
 import { MdEmail, MdTimer } from "react-icons/md";
-import { sendContactEmail } from "../services/emailService";
+import { sendContactEmail } from "../services/EmailService";
 
 gsap.registerPlugin(ScrollTrigger);
 
