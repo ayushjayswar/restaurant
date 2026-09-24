@@ -5,7 +5,7 @@ const AuthContext = createContext(null);
 const STORAGE_KEY = "auth_user";
 const TOKEN_KEY = "access_token";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
