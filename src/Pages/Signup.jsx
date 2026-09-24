@@ -6,8 +6,8 @@ const BG_IMAGE =
   "https://plus.unsplash.com/premium_photo-1661964071015-d97428970584?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0";
 
 // FastAPI backend ka URL - agar backend kisi doosre port/host par ho to yahan badal do
-// const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com";
+// const API_URL = "http://127.0.0.1:8000";
 
 
 export default function Signup({ onSignupSuccess }) {

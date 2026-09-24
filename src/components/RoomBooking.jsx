@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { sendRoomBooking } from '../services/emailService';
+import { sendRoomBooking } from '../services/EmailService';
 
 gsap.registerPlugin(ScrollTrigger);
 
