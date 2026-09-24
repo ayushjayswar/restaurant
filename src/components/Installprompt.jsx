@@ -3,19 +3,15 @@ import { useLocation } from 'react-router-dom'
 import { FaXmark } from "react-icons/fa6"
 import { FaDownload } from "react-icons/fa"
 
-const InstallPrompt = () => {
+// public folder mein file ka naam bilkul ForkFlame.apk hona chahiye
+const APK_URL = '/ForkFlame.apk'
+
+const Installprompt = () => {
     const [showPrompt, setShowPrompt] = useState(false)
     const location = useLocation()
 
     useEffect(() => {
-        // Agar user pehle app install (download) kar chuka hai, to popup kabhi nahi dikhega
-        const isInstalled = localStorage.getItem('appInstalled')
-        if (isInstalled) {
-            setShowPrompt(false)
-            return
-        }
-
-        // Har route change / refresh pe popup dobara dikhega (jab tak download na ho)
+        // Har route change / refresh pe popup 1.5 second baad dikhega
         const timer = setTimeout(() => {
             setShowPrompt(true)
         }, 1500)
@@ -26,19 +22,18 @@ const InstallPrompt = () => {
     const handleInstall = () => {
         // APK download trigger karega
         const link = document.createElement('a')
-        link.href = '/ForkFlame.apk'
+        link.href = APK_URL
         link.download = 'ForkFlame.apk'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
 
-        // Ek baar download ho gaya, to ye popup dobara kabhi nahi dikhega
-        localStorage.setItem('appInstalled', 'true')
+        // Sirf abhi ke liye hide hoga, refresh ya route change pe phir dikhega
         setShowPrompt(false)
     }
 
     const handleClose = () => {
-        // Sirf abhi ke liye hide hoga - route change ya refresh pe phir dikhega
+        // Sirf abhi ke liye hide hoga, refresh ya route change pe phir dikhega
         setShowPrompt(false)
     }
 
@@ -95,4 +90,4 @@ const InstallPrompt = () => {
     )
 }
 
-export default InstallPrompt
+export default Installprompt
