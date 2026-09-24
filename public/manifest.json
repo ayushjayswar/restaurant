@@ -1,78 +1,114 @@
 {
+  "name": "Fork & Flame",
+  "short_name": "Fork & Flame",
   "id": "/",
-  "name": "ForkFlame",
-  "short_name": "ForkFlame",
-  "description": "Table booking, room booking and menu for ForkFlame restaurant.",
+  "description": "Fork & Flame is a modern restaurant and hotel booking platform where customers can explore the menu, reserve tables, and book rooms.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "fullscreen"],
-  "orientation": "portrait",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
-  "theme_color": "#f97316",
-  "lang": "en",
+  "theme_color": "#111827",
+  "lang": "en-IN",
   "dir": "ltr",
-  "categories": ["food", "lifestyle", "business"],
+  "categories": [
+    "food",
+    "restaurant",
+    "lifestyle"
+  ],
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
       "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home-mobile.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Home screen of Fork & Flame"
+      "purpose": "any"
     },
     {
-      "src": "/screenshots/home-desktop.png",
-      "sizes": "1920x1080",
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
       "type": "image/png",
-      "form_factor": "wide",
-      "label": "Home screen of Fork & Flame on desktop"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Book a Table",
-      "short_name": "Book Table",
-      "description": "Quickly book a table at Fork & Flame",
-      "url": "/booking",
+      "name": "View Menu",
+      "short_name": "Menu",
+      "description": "Browse the Fork & Flame food menu",
+      "url": "/menu",
       "icons": [
-        { "src": "/icons/icon-192.png", "sizes": "192x192" }
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
       ]
     },
     {
-      "name": "View Menu",
-      "short_name": "Menu",
-      "description": "See the restaurant menu",
-      "url": "/menu",
+      "name": "Reserve Table",
+      "short_name": "Reservation",
+      "description": "Reserve a table at Fork & Flame",
+      "url": "/reservation",
       "icons": [
-        { "src": "/icons/icon-192.png", "sizes": "192x192" }
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Book Room",
+      "short_name": "Room Booking",
+      "description": "Book a room at Fork & Flame",
+      "url": "/roombooking",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
       ]
     }
   ]
