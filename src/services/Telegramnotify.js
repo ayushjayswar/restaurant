@@ -1,7 +1,7 @@
 // src/services/Telegramnotify.js
 
 // FastAPI backend ka Telegram notification endpoint
-const NOTIFY_URL = "http://127.0.0.1:8000/notify";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com";
 
 
 // Owner ko Telegram notification bhejta hai
