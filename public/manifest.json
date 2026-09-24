@@ -4,16 +4,17 @@
   "id": "/",
   "start_url": "/",
   "scope": "/",
-
   "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone", "minimal-ui", "browser"],
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
   "orientation": "portrait-primary",
-
   "background_color": "#ffffff",
   "theme_color": "#111827",
-
   "description": "Fork & Flame - Restaurant, Table Reservation and Room Booking",
-
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
