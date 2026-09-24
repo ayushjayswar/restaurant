@@ -3,8 +3,14 @@ import { useLocation } from 'react-router-dom'
 import { FaXmark } from "react-icons/fa6"
 import { FaDownload } from "react-icons/fa"
 
+// public folder wali APK file ka link (space aur & URL mein encode kiye hue hain)
+// Agar file ka naam badal kar ForkFlame.apk kar do, to yahan '/ForkFlame.apk' likh dena
+const APK_URL = '/Fork%20%26%20Flame.apk'
+const APK_DOWNLOAD_NAME = 'ForkFlame.apk'
+
 const InstallPrompt = () => {
     const [showPrompt, setShowPrompt] = useState(false)
+    const [error, setError] = useState('')
     const location = useLocation()
 
     useEffect(() => {
@@ -23,18 +29,31 @@ const InstallPrompt = () => {
         return () => clearTimeout(timer)
     }, [location.pathname])
 
-    const handleInstall = () => {
-        // APK download trigger karega
-        const link = document.createElement('a')
-        link.href = '/ForkFlame.apk'
-        link.download = 'ForkFlame.apk'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+    const handleInstall = async () => {
+        setError('')
+        try {
+            // Pehle check karo ki file sach mein mil rahi hai (HTML nahi)
+            const res = await fetch(APK_URL, { method: 'HEAD' })
+            const type = res.headers.get('content-type') || ''
+            if (!res.ok || type.includes('text/html')) {
+                setError('App file abhi available nahi hai. Thodi der baad try karein.')
+                return
+            }
 
-        // Ek baar download ho gaya, to ye popup dobara kabhi nahi dikhega
-        localStorage.setItem('appInstalled', 'true')
-        setShowPrompt(false)
+            // APK download trigger karega
+            const link = document.createElement('a')
+            link.href = APK_URL
+            link.download = APK_DOWNLOAD_NAME
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+
+            // Download shuru ho gaya, to ye popup dobara kabhi nahi dikhega
+            localStorage.setItem('appInstalled', 'true')
+            setShowPrompt(false)
+        } catch (e) {
+            setError('Download nahi ho paya. Internet check karke dobara try karein.')
+        }
     }
 
     const handleClose = () => {
@@ -66,7 +85,7 @@ const InstallPrompt = () => {
                                 Fork&Flame App
                             </p>
                             <p className='text-xs sm:text-sm text-orange-50 truncate'>
-                                Faster booking, exclusive offers &amp; more
+                                {error || 'Faster booking, exclusive offers & more'}
                             </p>
                         </div>
                     </div>
