@@ -43,7 +43,7 @@ export default function RoomBooking() {
   useEffect(() => {
     const loadRooms = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/rooms');
+        const response = await fetch('https://lcd-dressing-jim-oven.trycloudflare.com/rooms');
         if (!response.ok) throw new Error('Rooms fetch failed');
         const result = await response.json();
         const backendRooms = (result.rooms || []).map((room) => ({

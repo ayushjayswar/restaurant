@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react'
 import gsap from 'gsap';
 import ItemModal from "../components/ItemModal";
 
-const API_URL = "http://127.0.0.1:8000";
+// const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
 
 const Menu = () => {
 
