@@ -26,7 +26,7 @@ const Hero = () => {
 
          <div className='absolute inset-0 bg-black opacity-80'>
                 <div className='container mx-auto px-6 h-full flex items-center z-10 relative'>
-                  <div className='text-white max-w-2xl' key={animKey}>
+                  <div className='text-white max-w-2xl ' key={animKey}>
 
                     <h2 className='font-bold mb-4 text-5xl tracking-tight flex flex-wrap gap-x-3'>
                       {words.map((word, i) => (
@@ -50,15 +50,27 @@ const Hero = () => {
                       Indulge in our exquisite culinary creations crafted with passion and the finest ingredients.
                     </motion.p>
 
-                    <motion.a
-                      className='inline-block bg-red-700 rounded-full px-8 py-3 cursor-pointer hover:bg-red-900 transition duration-300 transform active:scale-95'
-                      href='/reservation'
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: 1.1 }}
-                    >
-                      Book a Table
-                    </motion.a>
+                    <div className='flex flex-wrap gap-4'>
+                      <motion.a
+                        className='inline-block bg-red-700 rounded-full px-8 py-3 cursor-pointer hover:bg-red-900 transition duration-300 transform active:scale-95'
+                        href='/roombooking'
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 1.1 }}
+                      >
+                        Book A Rooms
+                      </motion.a>
+
+                      <motion.a
+                        className='inline-block bg-red-700 rounded-full px-8 py-3 cursor-pointer hover:bg-red-900 transition duration-300 transform active:scale-95'
+                        href='/reservation'
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 1.1 }}
+                      >
+                        Book Your Table
+                      </motion.a>
+                    </div>
 
                   </div>
                 </div>

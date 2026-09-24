@@ -19,8 +19,9 @@ const ItemModal = ({isopen , onClose , item}) => {
         />
         <p className=' text-black text-2xl font-bold '>{item.title}</p>
         <p className=' text-gray-800 text-lg '>{item.description}</p>
-        <p className=' text-red-700 font-bold line-through '>{item.price}</p>
-        <p className=' text-green-700 font-bold '>{item.discountPrice} Discount For You</p>
+        <p className=' text-red-700 font-bold  '>{item.price}</p>
+        
+        
 
       </div>
     </div>

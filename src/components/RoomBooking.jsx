@@ -1,61 +1,24 @@
-/**
- * RoomBooking.jsx — Fork & Flame room booking page (Indian version)
- * -----------------------------------------------------------
- * npm install gsap
- * Requires Tailwind CSS already set up in the project.
- *
- * Pricing: Night stay = ₹1500 | Day & Night stay = ₹2000
- */
-
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { sendRoomBooking } from '../services/Reservation';
+import { sendRoomBooking } from '../services/EmailService';
 
 gsap.registerPlugin(ScrollTrigger);
 
 // Room details - normal hotel rooms, Indian pricing
-const ROOMS = [
-  {
-    id: 'deluxe',
-    name: 'Deluxe Room',
-    capacity: '2 Adults + 1 Child',
-    nightPrice: 1500,
-    dayNightPrice: 2000,
-    description:
-      'A comfortable room with a queen-size bed, attached bathroom, and a work desk. Great for solo travelers or couples.',
-    image:
-      'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0',
-  },
-  {
-    id: 'family',
-    name: 'Family Suite',
-    capacity: '4 Adults + 2 Children',
-    nightPrice: 1500,
-    dayNightPrice: 2000,
-    description:
-      'A spacious suite with two beds, a sitting area, and extra storage. Perfect for families travelling together.',
-    image:
-      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0',
-  },
-  {
-    id: 'premium',
-    name: 'Premium Room',
-    capacity: '2 Adults',
-    nightPrice: 1500,
-    dayNightPrice: 2000,
-    description:
-      'Our best room with a balcony, premium furnishing, and a mini fridge. Ideal for a relaxed, comfortable stay.',
-    image:
-      'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0',
-  },
+const ROOMS_FALLBACK = [
+  { id: 1, name: 'Normal Room', capacity: '2 Adults + 1 Child', nightPrice: 1500, dayNightPrice: 2000, description: 'A comfortable room with a queen-size bed, attached bathroom, and a work desk. Great for solo travelers or couples.', image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0' },
+  { id: 2, name: 'Family Suite', capacity: '4 Adults + 2 Children', nightPrice: 1500, dayNightPrice: 2000, description: 'A spacious suite with two beds, a sitting area, and extra storage. Perfect for families travelling together.', image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0' },
+  { id: 3, name: 'Premium Room', capacity: '2 Adults', nightPrice: 1500, dayNightPrice: 2000, description: 'Our best room with a balcony, premium furnishing, and a mini fridge. Ideal for a relaxed, comfortable stay.', image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0' },
 ];
 
 export default function RoomBooking() {
   const navigate = useNavigate();
-  const { requireAuth } = useAuth();
+  const { requireAuth, user, authFetch } = useAuth();
+  const [rooms, setRooms] = useState(ROOMS_FALLBACK);
 
   const rootRef = useRef(null);
   const titleRef = useRef(null);
@@ -71,19 +34,43 @@ export default function RoomBooking() {
     date: '',
     time: '',
     guests: '',
-    room: ROOMS[0].id,
+    room: ROOMS_FALLBACK[0].id,
     stayType: 'night', // 'night' ya 'daynight'
   });
   const [status, setStatus] = useState('idle'); // idle | sending | reserved
   const [error, setError] = useState('');
 
-  const selectedRoom = ROOMS.find((r) => r.id === form.room);
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/rooms');
+        if (!response.ok) throw new Error('Rooms fetch failed');
+        const result = await response.json();
+        const backendRooms = (result.rooms || []).map((room) => ({
+          id: room.id,
+          name: room.name,
+          capacity: room.capacity || 'Guests welcome',
+          nightPrice: Number(room.price || 1500),
+          dayNightPrice: Number(room.price || 1500),
+          description: room.description || '',
+          image: room.image || '',
+        }));
+        if (backendRooms.length > 0) {
+          setRooms(backendRooms);
+          setForm((f) => ({ ...f, room: backendRooms[0].id }));
+        }
+      } catch (err) {
+        console.error('Rooms API Error:', err);
+      }
+    };
+    loadRooms();
+  }, []);
+
+  const selectedRoom = rooms.find((r) => String(r.id) === String(form.room));
   const currentPrice =
     form.stayType === 'night' ? selectedRoom?.nightPrice : selectedRoom?.dayNightPrice;
 
   // ===================== GSAP START =====================
-  // Hero title ke letters ek-ek karke ubharte hain, aur background mai
-  // halke ember (chingari) particles upar float karte hain.
   useLayoutEffect(() => {
     const reduceMotion =
       typeof window !== 'undefined' &&
@@ -140,7 +127,6 @@ export default function RoomBooking() {
           );
       }
 
-      // Drifting embers - background mai halke floating dots
       const field = particlesRef.current;
       if (field && !reduceMotion) {
         const count = 18;
@@ -185,7 +171,6 @@ export default function RoomBooking() {
   // ===================== GSAP END =====================
 
   // ===================== GSAP START =====================
-  // Room cards scroll karte waqt left/right se wipe hoke andar aate hain
   useEffect(() => {
     const reduceMotion =
       typeof window !== 'undefined' &&
@@ -248,52 +233,56 @@ export default function RoomBooking() {
   const handleChange = (field) => (e) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Login check - agar user login nahi hai to yahi rok denge
     if (!requireAuth(navigate)) return;
-
     if (status !== 'idle') return;
-
     setError('');
     setStatus('sending');
 
-    sendRoomBooking({
-      name: form.name,
-      email: form.email,
-      date: form.date,
-      time: form.time,
-      guests: form.guests,
-      roomName: selectedRoom?.name || form.room,
-      roomPrice: `₹${currentPrice} (${form.stayType === 'night' ? 'Night' : 'Day & Night'})`,
-    })
-      .then(() => {
-        // ===================== GSAP START =====================
-        // Confirmation "stamp" wali chhoti animation - booking confirm hote hi chalti hai
-        const tl = gsap.timeline({
-          onComplete: () => setStatus('reserved'),
-        });
+    try {
+      if (!selectedRoom) throw new Error('Room not found');
+      const checkIn = `${form.date} ${form.time}`;
+      const checkOutDate = new Date(`${form.date}T${form.time}`);
+      if (form.stayType === 'night') checkOutDate.setDate(checkOutDate.getDate() + 1);
+      const checkOut = `${checkOutDate.getFullYear()}-${String(checkOutDate.getMonth() + 1).padStart(2, '0')}-${String(checkOutDate.getDate()).padStart(2, '0')} ${form.time}`;
 
-        tl.to(stampRef.current, { scale: 0.94, duration: 0.12, ease: 'power1.in' })
-          .to(stampRef.current, {
-            scale: 1,
-            duration: 0.4,
-            ease: 'elastic.out(1, 0.4)',
-          })
-          .fromTo(
-            confirmRef.current,
-            { opacity: 0, x: 20, rotate: -3 },
-            { opacity: 1, x: 0, rotate: -2, duration: 0.5, ease: 'power3.out' },
-            '-=0.25'
-          );
-        // ===================== GSAP END =====================
-      })
-      .catch((err) => {
-        console.error('EmailJS Error:', err);
-        setError('Booking bhejne mein error aayi. Dobara try karo.');
-        setStatus('idle');
+      const response = await authFetch('/room-bookings', {
+        method: 'POST',
+        body: JSON.stringify({
+          user_email: user.email,
+          room_id: Number(selectedRoom.id),
+          check_in: checkIn,
+          check_out: checkOut,
+          guests: Number(form.guests),
+          total_amount: Number(currentPrice),
+        }),
       });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || 'Room booking failed');
+
+      // Booking pending hai: owner ko Telegram notification jaati hai.
+      // Customer ko confirmation email tab jaayegi jab admin confirm karega.
+      // (Error aaye toh bhi booking save ho chuki hai, isliye sirf console mein dikhate hain)
+      sendRoomBooking({
+        name: form.name,
+        email: form.email,
+        date: form.date,
+        time: form.time,
+        guests: form.guests,
+        roomName: selectedRoom.name,
+        roomPrice: `₹${currentPrice}`,
+      }).catch((err) => console.error('Room notification error:', err));
+
+      const tl = gsap.timeline({ onComplete: () => setStatus('reserved') });
+      tl.to(stampRef.current, { scale: 0.94, duration: 0.12, ease: 'power1.in' })
+        .to(stampRef.current, { scale: 1, duration: 0.4, ease: 'elastic.out(1, 0.4)' })
+        .fromTo(confirmRef.current, { opacity: 0, x: 20, rotate: -3 }, { opacity: 1, x: 0, rotate: -2, duration: 0.5, ease: 'power3.out' }, '-=0.25');
+    } catch (err) {
+      console.error('Room Booking Error:', err);
+      setError(err.message || 'Booking bhejne mein error aayi. Dobara try karo.');
+      setStatus('idle');
+    }
   };
 
   return (
@@ -302,7 +291,7 @@ export default function RoomBooking() {
       className="bg-[#17110D] text-[#F4EFE6] font-[Inter,system-ui,sans-serif] overflow-x-hidden"
     >
       {/* ---------- Hero ---------- */}
-      <section className="relative min-h-[70vh] flex flex-col items-center justify-center text-center px-6 py-24 border-b border-white/10">
+      <section className="relative min-h-[50vh] flex flex-col items-center justify-center text-center px-6 py-3 border-b border-white/10">
         <div ref={particlesRef} className="absolute inset-0 overflow-hidden pointer-events-none" />
         <div className="relative z-10 text-[#B08D57] text-sm tracking-wide mb-4">
           Fork &amp; Flame · Room Booking
@@ -331,7 +320,7 @@ export default function RoomBooking() {
 
       {/* ---------- Room panels ---------- */}
       <section className="py-16">
-        {ROOMS.map((room, i) => (
+        {rooms.map((room, i) => (
           <div
             key={room.id}
             ref={(el) => (panelRefs.current[i] = el)}
@@ -407,7 +396,7 @@ export default function RoomBooking() {
 
           <div className="flex flex-col gap-1.5 mb-4">
             <label htmlFor="rb-email" className="text-xs text-[#F4EFE6]/65">
-              Email (confirmation yahin bhejenge)
+              Email (booking confirm hone par yahin mail aayegi)
             </label>
             <input
               id="rb-email"
@@ -475,7 +464,7 @@ export default function RoomBooking() {
                 onChange={handleChange('room')}
                 className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
               >
-                {ROOMS.map((r) => (
+                {rooms.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.name}
                   </option>
@@ -520,7 +509,7 @@ export default function RoomBooking() {
             >
               {status === 'idle' && 'Reserve room'}
               {status === 'sending' && 'Reserving…'}
-              {status === 'reserved' && 'Reserved'}
+              {status === 'reserved' && 'Request sent'}
             </button>
           </div>
 
@@ -529,9 +518,9 @@ export default function RoomBooking() {
               ref={confirmRef}
               className="mt-6 bg-[#C1440E]/10 border border-[#C1440E] px-4 py-3.5 rounded-[3px] text-sm opacity-0"
             >
-              You're booked into {selectedRoom?.name} on {form.date} at{' '}
-              {form.time} (₹{currentPrice}). We'll email {form.name} a
-              confirmation shortly.
+              Your request for {selectedRoom?.name} on {form.date} at{' '}
+              {form.time} (₹{currentPrice}) has been received and is pending
+              confirmation. We'll email {form.email} once it's confirmed.
             </div>
           )}
         </form>

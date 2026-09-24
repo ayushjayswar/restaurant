@@ -122,30 +122,22 @@ const Footer = () => {
                     <div ref={col2Ref} className='w-56 '>
                         <h1 className='text-xl  text-white font-semibold mb-4'>Quick Link</h1>
 
-                        <ul className='font-semibold text-xl text-white'>
+                        <ul className='grid grid-cols-[auto_auto] justify-start gap-x-2 gap-y-2 font-semibold text-xl text-white'>
 
                             <li>
-                                <a href="/home">Home</a>
+                                <a href="#home">Home</a>
                             </li>
 
                             <li>
-                                <a href="/about">About</a>
+                                <a href="#about">About</a>
                             </li>
 
                             <li>
-                                <a href="/menu">Menu</a>
-                            </li>
-
-                             <li>
-                                <a href="/roombooking">Room</a>
+                                <a href="#menu">Menu</a>
                             </li>
 
                             <li>
-                                <a href="/reservation">Reservation</a>
-                            </li>
-
-                            <li>
-                                <a href="/contact">Contact</a>
+                                <a href="#reservation">Reservation</a>
                             </li>
 
                         </ul>
@@ -155,7 +147,7 @@ const Footer = () => {
 
                     <div ref={col3Ref} className='w-56'>
                         <h1 className='font-semibold text-xl
-                        mb-4  text-white '>Contact Info</h1>
+                        mb-4  text-white text-center'>Contact Info</h1>
                         <p className='font-semibold  text-white'>
                            Ujjain Nagri
                             info@forkandflame.com
@@ -165,7 +157,7 @@ const Footer = () => {
                     {/* fourth */}
 
                     <div ref={col4Ref} className=' items-center gap-4 mb-6'>
-                        <h1 className=' text-xl  text-white font-semibold mb-4 '>Follow Us</h1>
+                        <h1 className=' text-xl  text-white font-semibold mb-4 text-center'>Follow Us</h1>
 
                         <div ref={iconsRef} className='flex items-center gap-4 mb-6 '>
 

@@ -16,11 +16,10 @@ const BookingModal = ({ isOpen, onClose, bookingData }) => {
                         </div>
                     </div>
                     <h3 className='text-2xl font-bold text-gray-800 mb-2 animate-[fadeInUp_0.4s_ease-out_0.1s_both]'>
-                        Booking Confirmed!
+                    Pending — Awaiting Admin Confirmation!
                     </h3>
                     <p className='text-gray-600 mb-6 animate-[fadeInUp_0.4s_ease-out_0.2s_both]'>
-                        Your table has been successfully reserved.
-                        We look forward to serving you!
+                    Your table reservation has been received successfully. We will confirm your reservation shortly!
                     </p>
                     <div className='bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-2 animate-[fadeInUp_0.4s_ease-out_0.3s_both]'>
                         <p>

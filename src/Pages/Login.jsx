@@ -6,11 +6,12 @@ const BG_IMAGE =
   "https://plus.unsplash.com/premium_photo-1661964071015-d97428970584?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0";
 
 // FastAPI backend ka URL - agar backend kisi doosre port/host par ho to yahan badal do
-const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
+// const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
+const API_URL = "http://127.0.0.1:8000";
 
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, showToast } = useAuth();
   const [identifier, setIdentifier] = useState(""); // email ya username
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +37,8 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
-      login(result.user); // global auth state update - Navbar ko turant pata chal jayega
+      login(result.user, result.access_token);// global auth state update - Navbar ko turant pata chal jayega
+      showToast("Successfully logged in!");
       if (onLoginSuccess) onLoginSuccess(result.user);
       navigate("/"); // login ke baad homepage par bhej do
     } catch (err) {
@@ -53,15 +55,15 @@ export default function Login({ onLoginSuccess }) {
     >
       <div className="absolute inset-0 bg-black/40" />
 
-      <div className="relative w-full max-w-sm rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl px-8 py-10">
+      <div className="relative w-full max-w-sm rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl px-6 py-6">
         <h1 className="text-2xl font-semibold text-white text-center">
           Welcome back
         </h1>
-        <p className="text-sm text-white/70 text-center mt-1 mb-8">
+        <p className="text-sm text-white/70 text-center mt-1 mb-5">
           Login with your email or username
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-white/80 mb-1">
               Email or Username
@@ -71,7 +73,7 @@ export default function Login({ onLoginSuccess }) {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="you@example.com or username"
-              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2.5 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
+              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-white/50 transition"
               autoComplete="username"
             />
           </div>
@@ -114,7 +116,7 @@ export default function Login({ onLoginSuccess }) {
           </button>
         </form>
 
-        <p className="text-sm text-white/70 text-center mt-6">
+        <p className="text-sm text-white/70 text-center mt-4">
           Don't have an account?{" "}
           <button
             type="button"
