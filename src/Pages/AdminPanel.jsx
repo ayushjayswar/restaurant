@@ -25,7 +25,7 @@ import { useNavigate } from "react-router-dom";
 import {
   sendReservationStatusEmail,
   sendRoomStatusEmail,
-} from "../services/EmailService";
+} from "../services/emailService";
 
 const AdminPanel = () => {
   const { user, logout, authFetch } = useAuth();
