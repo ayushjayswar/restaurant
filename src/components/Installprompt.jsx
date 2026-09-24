@@ -3,17 +3,13 @@ import { useLocation } from 'react-router-dom'
 import { FaXmark } from "react-icons/fa6"
 import { FaDownload } from "react-icons/fa"
 
-// public folder mein file ka naam bilkul ForkFlame.apk hona chahiye
-const APK_URL = '/ForkFlame.apk'
-const APK_DOWNLOAD_NAME = 'ForkFlame.apk'
-
 const InstallPrompt = () => {
     const [showPrompt, setShowPrompt] = useState(false)
-    const [error, setError] = useState('')
     const location = useLocation()
 
     useEffect(() => {
-        // Har route change / refresh pe popup 1.5 second baad dikhega
+        // Har route change / refresh pe popup dobara dikhega
+        // (install/download ke baad bhi — localStorage wala permanent-hide hataya hai)
         const timer = setTimeout(() => {
             setShowPrompt(true)
         }, 1500)
@@ -21,34 +17,21 @@ const InstallPrompt = () => {
         return () => clearTimeout(timer)
     }, [location.pathname])
 
-    const handleInstall = async () => {
-        setError('')
-        try {
-            // Pehle check karo ki asli APK mil rahi hai (HTML nahi)
-            const res = await fetch(APK_URL, { method: 'HEAD' })
-            const type = res.headers.get('content-type') || ''
-            if (!res.ok || type.includes('text/html')) {
-                setError('App file abhi available nahi hai. Thodi der baad try karein.')
-                return
-            }
+    const handleInstall = () => {
+        // APK download trigger karega
+        const link = document.createElement('a')
+        link.href = '/ForkFlame.apk'
+        link.download = 'ForkFlame.apk'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
 
-            // APK download trigger karega
-            const link = document.createElement('a')
-            link.href = APK_URL
-            link.download = APK_DOWNLOAD_NAME
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-
-            // Sirf abhi ke liye hide hoga, refresh ya route change pe phir dikhega
-            setShowPrompt(false)
-        } catch (e) {
-            setError('Download nahi ho paya. Internet check karke dobara try karein.')
-        }
+        // Sirf abhi ke liye hide hoga — route change ya refresh pe phir dikhega
+        setShowPrompt(false)
     }
 
     const handleClose = () => {
-        // Sirf abhi ke liye hide hoga, refresh ya route change pe phir dikhega
+        // Sirf abhi ke liye hide hoga - route change ya refresh pe phir dikhega
         setShowPrompt(false)
     }
 
@@ -76,7 +59,7 @@ const InstallPrompt = () => {
                                 Fork&Flame App
                             </p>
                             <p className='text-xs sm:text-sm text-orange-50 truncate'>
-                                {error || 'Faster booking, exclusive offers & more'}
+                                Faster booking, exclusive offers &amp; more
                             </p>
                         </div>
                     </div>
