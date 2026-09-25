@@ -2388,3 +2388,8 @@ const Modal = ({ title, close, children }) => {
 
 
 export default AdminPanel;
+
+
+
+
+
