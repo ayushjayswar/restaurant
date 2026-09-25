@@ -32,8 +32,8 @@ import {
   sendRoomStatusEmail,
 } from "../services/EmailService";
 
-import ImageUploadField from "../components/ImageUploadField";
-import DynamicListEditor from "../components/DynamicListEditor";
+import ImageUploadField from "../components/Imageuploadfield";
+import DynamicListEditor from "../components/Dynamiclisteditor";
 
 const AdminPanel = () => {
   const { user, logout, authFetch } = useAuth();
