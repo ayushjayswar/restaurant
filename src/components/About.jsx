@@ -221,7 +221,7 @@ const About = () => {
                     <div className='md:w-1/2'>
                         <div
                             ref={imageWrapRef}
-                            className='relative rounded-md overflow-hidden border border-white/10 aspect-[4/5] md:aspect-[4/5] after:content-[""] after:absolute after:inset-0 after:bg-gradient-to-t after:from-black/40 after:to-transparent after:pointer-events-none'
+                            className='relative rounded-xl overflow-hidden after:content-[""] after:absolute after:inset-0 after:bg-gradient-to-t after:from-black/40 after:to-transparent after:pointer-events-none'
                         >
                             <img
                                 ref={imageRef}
