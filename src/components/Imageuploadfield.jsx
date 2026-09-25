@@ -36,20 +36,45 @@ const ImageUploadField = ({ label, value, onChange, authFetch }) => {
                 body: formData,
             });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.detail || 'Upload failed');
+            let result = null;
+            try {
+                result = await response.json();
+            } catch {
+                // response body wasn't valid JSON (e.g. empty or HTML error page)
             }
 
-            const url = result.url?.startsWith('http')
+            if (!response.ok) {
+                // FastAPI validation errors return `detail` as an ARRAY of
+                // objects (e.g. [{ loc, msg, type }]), not a plain string.
+                // Passing that straight into `new Error(...)` stringifies it
+                // to the literal text "[object Object]", which is the bug
+                // that was happening here.
+                let message = 'Upload failed';
+                if (result?.detail) {
+                    if (typeof result.detail === 'string') {
+                        message = result.detail;
+                    } else if (Array.isArray(result.detail)) {
+                        message = result.detail
+                            .map((d) => d?.msg || JSON.stringify(d))
+                            .join(', ');
+                    } else {
+                        message = JSON.stringify(result.detail);
+                    }
+                } else if (!result) {
+                    message = `Upload failed (status ${response.status})`;
+                }
+                throw new Error(message);
+            }
+
+            const url = result?.url?.startsWith('http')
                 ? result.url
-                : `${API_URL}${result.url}`;
+                : `${API_URL}${result?.url ?? ''}`;
 
             onChange(url);
         } catch (err) {
             console.error('Image upload error:', err);
-            alert('Image upload nahi ho paaya. Dobara try karo ya URL paste karo.');
+            const readable = err instanceof Error ? err.message : String(err);
+            alert(`Image upload nahi ho paaya: ${readable}\nDobara try karo ya URL paste karo.`);
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -125,6 +150,3 @@ const ImageUploadField = ({ label, value, onChange, authFetch }) => {
 };
 
 export default ImageUploadField;
-
-
-
