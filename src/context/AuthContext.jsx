@@ -62,13 +62,21 @@ export function AuthProvider({ children }) {
   const authFetch = async (endpoint, options = {}) => {
     const token = getToken();
 
+    // FormData (file uploads) ke saath Content-Type MANUALLY set nahi karte —
+    // browser ko khud apna multipart boundary set karne dena zaroori hai,
+    // warna backend ko malformed body milta hai aur fields "required" error
+    // dete hain (ye hi bug tha image upload mein).
+    const isFormData = options.body instanceof FormData;
+
+    const headers = {
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`,
+    };
+
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     });
 
     return response;
