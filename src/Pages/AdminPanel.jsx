@@ -52,6 +52,33 @@ const AdminPanel = () => {
   const [modal, setModal] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
 
+  // NOTIFICATION DROPDOWN
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // ==============================
+  // SORT HELPER
+  // Naya item hamesha upar, purana neeche —
+  // status (pending/completed/cancelled) se
+  // farak nahi padta, sirf kab bana usse
+  // order decide hota hai.
+  // ==============================
+
+  const sortNewestFirst = (data) => {
+    return [...data].sort((a, b) => {
+      const aTime =
+        a.created_at
+          ? new Date(a.created_at).getTime()
+          : Number(a.id) || 0;
+
+      const bTime =
+        b.created_at
+          ? new Date(b.created_at).getTime()
+          : Number(b.id) || 0;
+
+      return bTime - aTime;
+    });
+  };
+
   // ==============================
   // LOAD ALL DATA
   // ==============================
@@ -105,7 +132,7 @@ const AdminPanel = () => {
         results[3].value.ok
       ) {
         const data = await results[3].value.json();
-        setOrders(data.orders || []);
+        setOrders(sortNewestFirst(data.orders || []));
       }
 
       // ROOM BOOKINGS
@@ -114,7 +141,9 @@ const AdminPanel = () => {
         results[4].value.ok
       ) {
         const data = await results[4].value.json();
-        setRoomBookings(data.room_bookings || []);
+        setRoomBookings(
+          sortNewestFirst(data.room_bookings || [])
+        );
       }
 
       // RESERVATIONS
@@ -123,7 +152,9 @@ const AdminPanel = () => {
         results[5].value.ok
       ) {
         const data = await results[5].value.json();
-        setReservations(data.reservations || []);
+        setReservations(
+          sortNewestFirst(data.reservations || [])
+        );
       }
 
       // ACTIVITY
@@ -677,6 +708,36 @@ const AdminPanel = () => {
   };
 
   // ==============================
+  // NOTIFICATIONS (derived from live data)
+  // ==============================
+
+  const pendingOrders = orders.filter(
+    (o) => o.status === "pending"
+  );
+
+  const pendingReservations = reservations.filter(
+    (r) => r.status === "pending" || r.status === "waiting"
+  );
+
+  const pendingBookings = roomBookings.filter(
+    (b) => b.status === "pending"
+  );
+
+  const notificationCount =
+    pendingOrders.length +
+    pendingReservations.length +
+    pendingBookings.length;
+
+  const hasNotifications = notificationCount > 0;
+
+  const goToTabFromNotification = (tab) => {
+    setActiveTab(tab);
+    setShowNotifications(false);
+    setSidebarOpen(false);
+    setSearch("");
+  };
+
+  // ==============================
   // RENDER
   // ==============================
 
@@ -933,13 +994,115 @@ const AdminPanel = () => {
 
               {/* NOTIFICATION */}
 
-              <button className="relative p-2.5 bg-gray-900 border border-gray-800 rounded-xl">
+              <div className="relative">
 
-                <Bell size={19} />
+                <button
+                  onClick={() =>
+                    setShowNotifications((prev) => !prev)
+                  }
+                  className="relative p-2.5 bg-gray-900 border border-gray-800 rounded-xl hover:bg-gray-800 transition"
+                  title="Notifications"
+                >
 
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                  <Bell size={19} />
 
-              </button>
+                  {hasNotifications && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                  )}
+
+                </button>
+
+                {showNotifications && (
+                  <>
+
+                    {/* click-outside to close */}
+                    <div
+                      onClick={() => setShowNotifications(false)}
+                      className="fixed inset-0 z-40"
+                    />
+
+                    <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50">
+
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+                        <span className="font-semibold text-sm">
+                          Notifications
+                        </span>
+
+                        {hasNotifications && (
+                          <span className="text-xs text-gray-500">
+                            {notificationCount} new
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="divide-y divide-gray-800">
+
+                        {!hasNotifications && (
+                          <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                            No new notifications
+                          </div>
+                        )}
+
+                        {pendingOrders.map((o) => (
+                          <button
+                            key={`order-${o.id}`}
+                            onClick={() =>
+                              goToTabFromNotification("orders")
+                            }
+                            className="w-full text-left px-4 py-3 text-sm hover:bg-gray-800/50 transition"
+                          >
+                            <p className="text-white font-medium">
+                              New order #{o.id}
+                            </p>
+                            <p className="text-gray-500 text-xs mt-0.5">
+                              {o.user_email || "-"} · ₹{o.total_amount || 0}
+                            </p>
+                          </button>
+                        ))}
+
+                        {pendingReservations.map((r) => (
+                          <button
+                            key={`res-${r.id}`}
+                            onClick={() =>
+                              goToTabFromNotification("reservations")
+                            }
+                            className="w-full text-left px-4 py-3 text-sm hover:bg-gray-800/50 transition"
+                          >
+                            <p className="text-white font-medium">
+                              Reservation #{r.id} — {r.status}
+                            </p>
+                            <p className="text-gray-500 text-xs mt-0.5">
+                              {r.name || r.user_email || "-"}
+                              {r.date ? ` · ${r.date}` : ""}
+                            </p>
+                          </button>
+                        ))}
+
+                        {pendingBookings.map((b) => (
+                          <button
+                            key={`booking-${b.id}`}
+                            onClick={() =>
+                              goToTabFromNotification("room-bookings")
+                            }
+                            className="w-full text-left px-4 py-3 text-sm hover:bg-gray-800/50 transition"
+                          >
+                            <p className="text-white font-medium">
+                              Room booking #{b.id}
+                            </p>
+                            <p className="text-gray-500 text-xs mt-0.5">
+                              {b.user_email || "-"}
+                            </p>
+                          </button>
+                        ))}
+
+                      </div>
+
+                    </div>
+
+                  </>
+                )}
+
+              </div>
 
             </div>
 
