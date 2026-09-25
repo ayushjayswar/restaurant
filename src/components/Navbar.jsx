@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import gsap from 'gsap';
 import { FaXmark } from "react-icons/fa6";
-import { Link } from "react-router-dom"
+import { Link, NavLink } from "react-router-dom"
 import { FaBars } from "react-icons/fa"
 import { FaCircleUser } from "react-icons/fa6"
 import { useAuth } from "../context/AuthContext"
@@ -12,13 +13,180 @@ const Navbar = () => {
     const [showProfileMenu, setShowProfileMenu] = useState(false)
     const { user, logout } = useAuth()
 
+    // Scroll-based navbar look — false = top of page
+    // (transparent), true = scrolled down (solid +
+    // blurred + shadow)
+    const [isScrolled, setIsScrolled] = useState(false)
+
+    // Refs for GSAP
+    const navRef = useRef(null)
+    const mobileMenuRef = useRef(null)
+    const mobileLinkRefs = useRef([])
+    mobileLinkRefs.current = []
+
+    const addMobileLinkRef = (el) => {
+        if (el && !mobileLinkRefs.current.includes(el)) {
+            mobileLinkRefs.current.push(el)
+        }
+    }
+
     const handleLogout = () => {
         logout()
         setShowProfileMenu(false)
     }
 
+
+    // ==============================
+    // GSAP START — navbar entrance
+    // Page load hote hi navbar upar se
+    // halka sa slide + fade karke aata hai
+    // ==============================
+
+    useEffect(() => {
+
+        const ctx = gsap.context(() => {
+
+            gsap.fromTo(
+                navRef.current,
+                { y: -40, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }
+            );
+
+        }, navRef);
+
+        return () => ctx.revert();
+
+    }, []);
+
+    // ==============================
+    // GSAP END — navbar entrance
+    // ==============================
+
+
+    // ==============================
+    // Scroll listener
+    // Sirf tab state update karte hain jab
+    // "scrolled" boolean flip hoti hai —
+    // isse GSAP animation baar baar trigger
+    // nahi hoti, sirf jab zaroorat ho.
+    // ==============================
+
+    useEffect(() => {
+
+        const handleScroll = () => {
+            const scrolled = window.scrollY > 20;
+
+            setIsScrolled((prev) =>
+                prev === scrolled ? prev : scrolled
+            );
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        // Page kisi scroll position par already
+        // load ho (jaise refresh on scrolled page)
+        handleScroll();
+
+        return () =>
+            window.removeEventListener('scroll', handleScroll);
+
+    }, []);
+
+
+    // ==============================
+    // GSAP START — navbar color/shadow
+    // transition on scroll
+    // Upar: transparent, koi shadow nahi.
+    // Scroll ke baad: white blurred
+    // background + soft shadow — smooth
+    // tween ke saath, abrupt jump nahi.
+    // ==============================
+
+    useEffect(() => {
+
+        const ctx = gsap.context(() => {
+
+            gsap.to(navRef.current, {
+                backgroundColor: isScrolled
+                    ? 'rgba(255, 255, 255, 0.85)'
+                    : 'rgba(255, 255, 255, 0)',
+                boxShadow: isScrolled
+                    ? '0 4px 24px rgba(15, 23, 42, 0.08)'
+                    : '0 0 0 rgba(15, 23, 42, 0)',
+                duration: 0.4,
+                ease: 'power2.out',
+            });
+
+            // backdrop blur GSAP se smoothly tween
+            // nahi hoti (browser support ke wajah
+            // se), isliye seedha set karte hain —
+            // baaki sab (bg/shadow) tween hi rahega
+            if (navRef.current) {
+                navRef.current.style.backdropFilter = isScrolled
+                    ? 'blur(14px)'
+                    : 'blur(0px)';
+                navRef.current.style.webkitBackdropFilter = isScrolled
+                    ? 'blur(14px)'
+                    : 'blur(0px)';
+            }
+
+        }, navRef);
+
+        return () => ctx.revert();
+
+    }, [isScrolled]);
+
+    // ==============================
+    // GSAP END — navbar color/shadow
+    // transition on scroll
+    // ==============================
+
+
+    // ==============================
+    // GSAP START — mobile menu entrance
+    // Jab hamburger se mobile menu khulta
+    // hai, links ek-ek karke (stagger)
+    // fade + slide karke aate hain.
+    // ==============================
+
+    useEffect(() => {
+
+        if (!showMenu || mobileLinkRefs.current.length === 0) return;
+
+        const ctx = gsap.context(() => {
+
+            gsap.fromTo(
+                mobileLinkRefs.current,
+                { opacity: 0, y: 16 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.4,
+                    ease: 'power3.out',
+                    stagger: 0.08,
+                }
+            );
+
+        }, mobileMenuRef);
+
+        return () => ctx.revert();
+
+    }, [showMenu]);
+
+    // ==============================
+    // GSAP END — mobile menu entrance
+    // ==============================
+
+
     return (
-        <div className='shadow-md sticky top-0 z-50 backdrop-blur-3xl'>
+        <div
+            ref={navRef}
+            className='sticky top-0 z-50'
+            style={{
+                backgroundColor: 'rgba(255, 255, 255, 0)',
+                boxShadow: '0 0 0 rgba(15, 23, 42, 0)',
+            }}
+        >
             <div className='contianer mx-auto px-3 sm:px-6 md:px-8 lg:px-10 xl:px-16'>
 
                 <div className='flex justify-between items-center py-2 gap-2'>
@@ -31,23 +199,72 @@ const Navbar = () => {
                     </div>
                     {/* nav link */}
                     <nav className=' hidden md:flex  item-center space-x-6 text-blue-950'>
-                        <Link className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/">
-                            Home</Link>
+                        <NavLink
+                            to="/"
+                            end
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Home
+                        </NavLink>
 
-                        <Link className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/about">
-                            About</Link>
+                        <NavLink
+                            to="/about"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            About
+                        </NavLink>
 
-                        <Link className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/menu">
-                            Menu</Link>
+                        <NavLink
+                            to="/menu"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Menu
+                        </NavLink>
 
-                        <Link className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/roombooking">
-                            Room-Booking</Link>
+                        <NavLink
+                            to="/roombooking"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Room-Booking
+                        </NavLink>
 
-                        <Link className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/reservation">
-                            Table-Reservation</Link>
+                        <NavLink
+                            to="/reservation"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Table-Reservation
+                        </NavLink>
 
-                        <Link className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/contact">
-                            Contact</Link>
+                        <NavLink
+                            to="/contact"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Contact
+                        </NavLink>
 
                         {/* Login / Signup - agar user login nahi hai, warna profile icon */}
                         <div className='relative flex items-center gap-3 pl-4 ml-2 border-l border-blue-950/20'>
@@ -145,27 +362,89 @@ const Navbar = () => {
             </div>
             {
                 showMenu && (
-                    <div className='md:hidden flex flex-col items-center space-y-6 py-20 h-screen'>
-                        <Link onClick={() => setshowMenu(!showMenu)} className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/">
-                            Home</Link>
+                    <div
+                        ref={mobileMenuRef}
+                        className='md:hidden flex flex-col items-center space-y-6 py-20 h-screen bg-white'
+                    >
+                        <NavLink
+                            ref={addMobileLinkRef}
+                            onClick={() => setshowMenu(!showMenu)}
+                            to="/"
+                            end
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Home
+                        </NavLink>
 
-                        <Link onClick={() => setshowMenu(!showMenu)} className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/about">
-                            About</Link>
+                        <NavLink
+                            ref={addMobileLinkRef}
+                            onClick={() => setshowMenu(!showMenu)}
+                            to="/about"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            About
+                        </NavLink>
 
-                        <Link onClick={() => setshowMenu(!showMenu)} className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/menu">
-                            Menu</Link>
+                        <NavLink
+                            ref={addMobileLinkRef}
+                            onClick={() => setshowMenu(!showMenu)}
+                            to="/menu"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Menu
+                        </NavLink>
 
-                         <Link onClick={() => setshowMenu(!showMenu)} className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 transition-all active:scale-95' to="/roombooking">
-                            Room-Booking</Link>
+                        <NavLink
+                            ref={addMobileLinkRef}
+                            onClick={() => setshowMenu(!showMenu)}
+                            to="/roombooking"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 transition-all active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Room-Booking
+                        </NavLink>
 
-                        <Link onClick={() => setshowMenu(!showMenu)} className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 active:scale-95' to="/reservation">
-                            Table-Reservation</Link>
+                        <NavLink
+                            ref={addMobileLinkRef}
+                            onClick={() => setshowMenu(!showMenu)}
+                            to="/reservation"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Table-Reservation
+                        </NavLink>
 
+                        <NavLink
+                            ref={addMobileLinkRef}
+                            onClick={() => setshowMenu(!showMenu)}
+                            to="/contact"
+                            className={({ isActive }) =>
+                                `font-semibold hover:scale-110 duration-300 transition-all active:scale-95 ${
+                                    isActive ? 'text-red-600' : 'hover:text-red-600'
+                                }`
+                            }
+                        >
+                            Contact
+                        </NavLink>
 
-                        <Link onClick={() => setshowMenu(!showMenu)} className='font-semibold  hover:text-red-600 hover:scale-110 duration-300 transition-all active:scale-95' to="/contact">
-                            Contact</Link> 
-
-                       
 
 
                     </div>
