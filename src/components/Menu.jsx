@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import gsap from 'gsap';
+import { Search, X } from 'lucide-react';
 import ItemModal from "../components/ItemModal";
 
 // const API_URL = "http://127.0.0.1:8000";
@@ -14,6 +15,12 @@ const Menu = () => {
 
     // Show only 3 items initially
     const [showAll, setShowAll] = useState(false);
+
+    // Search bar
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Category filter — "all" means no category filter applied
+    const [selectedCategory, setSelectedCategory] = useState("all");
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -121,8 +128,9 @@ const Menu = () => {
     // ==============================
     // GSAP — food cards entrance
     // Re-runs whenever the visible list changes (data load,
-    // Show Full Menu / Show Less toggle). Each run has its own
-    // clean start and its own clean end (revert before next run).
+    // Show Full Menu / Show Less toggle, search). Each run has
+    // its own clean start and its own clean end (revert before
+    // next run).
     // ==============================
     useEffect(() => {
 
@@ -148,7 +156,7 @@ const Menu = () => {
         return () => ctx.revert(); // GSAP end — revert before re-running or on unmount
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [loading, error, showAll, foodMenu]);
+    }, [loading, error, showAll, foodMenu, searchTerm, selectedCategory]);
 
 
     // ==============================
@@ -172,12 +180,67 @@ const Menu = () => {
 
 
     // ==============================
-    // SHOW 3 OR ALL FOOD
+    // CATEGORIES
+    // Admin ne food add karte waqt jo bhi
+    // category likhi hai, unhi se ye list
+    // apne aap ban jaati hai — koi hardcoding
+    // nahi. "All" hamesha pehla option hoga.
     // ==============================
 
-    const visibleFood = showAll
-        ? foodMenu
-        : foodMenu.slice(0, 3);
+    const categories = [
+        "All",
+        ...Array.from(
+            new Set(
+                foodMenu
+                    .map((food) => food.category)
+                    .filter((category) => category && category.trim())
+            )
+        ),
+    ];
+
+
+    // ==============================
+    // SEARCH + CATEGORY FILTER
+    // Search title, ingredients, category
+    // mein dhoondta hai; category filter
+    // sirf category field pe exact match
+    // karta hai. Dono ek saath bhi kaam
+    // karte hain.
+    // ==============================
+
+    const isSearching = searchTerm.trim().length > 0;
+    const isCategoryFiltered = selectedCategory !== "All";
+    const isFiltering = isSearching || isCategoryFiltered;
+
+    const filteredFood = foodMenu.filter((food) => {
+
+        const query = searchTerm.trim().toLowerCase();
+
+        const matchesSearch = !isSearching || (
+            food.title?.toLowerCase().includes(query) ||
+            food.ingredients?.toLowerCase().includes(query) ||
+            food.category?.toLowerCase().includes(query)
+        );
+
+        const matchesCategory =
+            !isCategoryFiltered ||
+            food.category === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+    });
+
+
+    // ==============================
+    // SHOW 3 OR ALL FOOD
+    // Search ya category filter active ho
+    // to sab matching items dikhao —
+    // "View Full Menu" wali 3-item limit
+    // tabhi lagti hai jab dono khaali hon.
+    // ==============================
+
+    const visibleFood = isFiltering
+        ? filteredFood
+        : (showAll ? foodMenu : foodMenu.slice(0, 3));
 
 
     // Small interactive press feedback for the toggle button
@@ -214,6 +277,108 @@ const Menu = () => {
                 <div className='max-w-4xl mx-auto'>
 
 
+                    {/* Search Bar */}
+
+                    {!loading && !error && foodMenu.length > 0 && (
+
+                        <div className='max-w-md mx-auto mb-8'>
+
+                            <div className='
+                                relative
+                                flex
+                                items-center
+                                border
+                                border-gray-300
+                                rounded-full
+                                px-5
+                                py-3
+                                shadow-sm
+                                focus-within:border-red-500
+                                focus-within:ring-2
+                                focus-within:ring-red-100
+                                transition
+                            '>
+
+                                <Search size={19} className='text-gray-400 shrink-0' />
+
+                                <input
+                                    type='text'
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder='Search for dishes, ingredients...'
+                                    className='
+                                        w-full
+                                        bg-transparent
+                                        outline-none
+                                        px-3
+                                        text-sm
+                                        text-gray-800
+                                        placeholder:text-gray-400
+                                    '
+                                />
+
+                                {searchTerm && (
+                                    <button
+                                        onClick={() => setSearchTerm("")}
+                                        className='text-gray-400 hover:text-gray-700 transition shrink-0'
+                                        aria-label='Clear search'
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                )}
+
+                            </div>
+
+
+                            {/* Category Filter Pills */}
+
+                            {categories.length > 1 && (
+
+                                <div className='
+                                    flex
+                                    flex-wrap
+                                    justify-center
+                                    gap-2
+                                    mt-4
+                                '>
+
+                                    {categories.map((category) => {
+
+                                        const active = selectedCategory === category;
+
+                                        return (
+                                            <button
+                                                key={category}
+                                                onClick={() => setSelectedCategory(category)}
+                                                className={`
+                                                    px-4
+                                                    py-1.5
+                                                    rounded-full
+                                                    text-sm
+                                                    font-medium
+                                                    border
+                                                    transition
+                                                    ${
+                                                        active
+                                                            ? 'bg-red-600 border-red-600 text-white'
+                                                            : 'bg-white border-gray-300 text-gray-600 hover:border-red-400 hover:text-red-600'
+                                                    }
+                                                `}
+                                            >
+                                                {category}
+                                            </button>
+                                        );
+                                    })}
+
+                                </div>
+
+                            )}
+
+                        </div>
+
+                    )}
+
+
                     {/* Loading */}
 
                     {loading && (
@@ -240,9 +405,30 @@ const Menu = () => {
                     )}
 
 
+                    {/* No Filtered Results */}
+
+                    {!loading &&
+                        !error &&
+                        isFiltering &&
+                        filteredFood.length === 0 && (
+
+                            <div className='text-center py-10'>
+
+                                <p className='text-gray-700'>
+                                    {isSearching
+                                        ? `"${searchTerm}" se milta koi item nahi mila.`
+                                        : `${selectedCategory} category mein koi item nahi mila.`}
+                                </p>
+
+                            </div>
+
+                        )
+                    }
+
+
                     {/* Food Cards section */}
 
-                    {!loading && !error && (
+                    {!loading && !error && visibleFood.length > 0 && (
 
                         <div ref={gridRef} className='grid grid-cols-1 md:grid-cols-3 gap-8'>
 
@@ -334,10 +520,14 @@ const Menu = () => {
 
 
                     {/* View Full Menu Button */}
+                    {/* Search active hone par ye button hide rehta
+                        hai kyunki tab sab matching results already
+                        dikh rahe hote hain. */}
 
                     {
                         !loading &&
                         !error &&
+                        !isFiltering &&
                         foodMenu.length > 3 && (
 
                             <div className='text-center'>

@@ -2311,6 +2311,21 @@ const UserModal = ({
    FOOD MODAL
 ===================================================== */
 
+// Fixed category list — dropdown se select hoti
+// hai taaki typo ki wajah se same category do
+// alag naamon se save na ho (jaise "Junk Food"
+// aur "junk food" alag-alag ban jaana).
+// Naya category chahiye ho to bas yahan add karo.
+const FOOD_CATEGORIES = [
+  "Junk Food",
+  "Starters",
+  "Main Course",
+  "Desserts",
+  "Drinks",
+  "Beverages",
+  "Combos",
+];
+
 const FoodModal = ({
   item,
   close,
@@ -2324,11 +2339,22 @@ const FoodModal = ({
       item?.description || "",
     price: item?.price || "",
     category:
-      item?.category || "",
+      item?.category || FOOD_CATEGORIES[0],
     image: item?.image || "",
     available:
       item?.available ?? true,
   });
+
+  // Agar edit ho rahe kisi purane food item ki
+  // category fixed list mein nahi hai (jaise
+  // pehle se DB mein koi alag spelling save thi),
+  // to usko bhi option mein dikhao taaki dropdown
+  // chupke se usko badal na de.
+  const categoryOptions =
+    form.category &&
+    !FOOD_CATEGORIES.includes(form.category)
+      ? [form.category, ...FOOD_CATEGORIES]
+      : FOOD_CATEGORIES;
 
   const [saving, setSaving] =
     useState(false);
@@ -2440,9 +2466,10 @@ const FoodModal = ({
           }
         />
 
-        <Input
+        <Select
           label="Category"
           value={form.category}
+          options={categoryOptions}
           onChange={(value) =>
             setForm({
               ...form,
