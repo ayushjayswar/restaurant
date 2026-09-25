@@ -9,11 +9,42 @@ import { sendContactEmail } from "../services/EmailService";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com";
+
 // Input / textarea ki common styling (RoomBooking jaisi dark theme)
 const fieldClass =
   "bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] w-full focus:outline-none focus:border-[#FF7A45] placeholder:text-[#F4EFE6]/30";
 
 const labelClass = "text-xs text-[#F4EFE6]/65";
+
+const CONTACT_ICONS = {
+  location: FaLocationArrow,
+  phone: FaPhoneAlt,
+  email: MdEmail,
+  time: MdTimer,
+};
+
+// Shown while /content hasn't loaded yet, or if the request fails.
+const DEFAULT_CONTACT = {
+  heading: "Let's Talk",
+  subtext:
+    "We'd love to hear from you. Send us a message and we'll get back to you soon.",
+  info_rows: [
+    { icon: "location", title: "Address", lines: ["Adarsh Colony"] },
+    { icon: "phone", title: "Phone", lines: ["1234567890"] },
+    { icon: "email", title: "Email", lines: ["Ayush@gmail.com"] },
+    {
+      icon: "time",
+      title: "Time",
+      lines: [
+        "Monday - Thursday: 5:00 PM - 10:00 PM",
+        "Friday - Saturday: 5:00 PM - 11:00 PM",
+        "Sunday: 11:00 AM - 9:00 PM",
+      ],
+    },
+  ],
+};
 
 const Contact = () => {
 
@@ -27,6 +58,8 @@ const Contact = () => {
     subject: "",
   });
 
+  const [contact, setContact] = useState(DEFAULT_CONTACT);
+  const [contentLoaded, setContentLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const sectionRef = useRef(null);
@@ -39,10 +72,38 @@ const Contact = () => {
 
 
   // ==============================
+  // GET CONTACT CONTENT FROM BACKEND
+  // (admin-edited heading/subtext/info rows)
+  // ==============================
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await fetch(`${API_URL}/content`);
+        if (!response.ok) return;
+
+        const result = await response.json();
+        if (result.contact) {
+          setContact(result.contact);
+        }
+      } catch (err) {
+        console.error("Site content fetch error:", err);
+      } finally {
+        setContentLoaded(true);
+      }
+    };
+
+    fetchContent();
+  }, []);
+
+
+  // ==============================
   // GSAP: HERO (title, particles)
+  // Waits for content to load so the heading text being animated is final.
   // ==============================
 
   useLayoutEffect(() => {
+    if (!contentLoaded) return;
+
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -151,11 +212,10 @@ const Contact = () => {
 
     return () => {
       ctx.revert();
-      // Dobara mount hone par duplicate na bane
       if (titleEl) titleEl.textContent = originalText;
       if (field) field.innerHTML = "";
     };
-  }, []);
+  }, [contentLoaded]);
 
 
   // ==============================
@@ -163,6 +223,8 @@ const Contact = () => {
   // ==============================
 
   useEffect(() => {
+    if (!contentLoaded) return;
+
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -202,10 +264,9 @@ const Contact = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [contentLoaded]);
 
 
-  // Small interactive press feedback for the submit button
   const animateButtonPress = (el) => {
     if (!el) return;
     gsap
@@ -228,7 +289,6 @@ const Contact = () => {
 
     animateButtonPress(e.nativeEvent.submitter);
 
-    // Login check - agar user login nahi hai to yahi rok denge
     if (!requireAuth(navigate)) return;
 
     if (
@@ -263,36 +323,6 @@ const Contact = () => {
   };
 
 
-  // Info card ke rows (icon + heading + text)
-  const infoRows = [
-    {
-      icon: <FaLocationArrow />,
-      title: "Address",
-      lines: ["Adarsh Colony"],
-    },
-    {
-      icon: <FaPhoneAlt />,
-      title: "Phone",
-      lines: ["1234567890"],
-    },
-    {
-      icon: <MdEmail />,
-      title: "Email",
-      lines: ["Ayush@gmail.com"],
-      breakAll: true,
-    },
-    {
-      icon: <MdTimer />,
-      title: "Time",
-      lines: [
-        "Monday - Thursday: 5:00 PM - 10:00 PM",
-        "Friday - Saturday: 5:00 PM - 11:00 PM",
-        "Sunday: 11:00 AM - 9:00 PM",
-      ],
-    },
-  ];
-
-
   return (
     <section
       id="contact"
@@ -318,11 +348,11 @@ const Contact = () => {
           ref={titleRef}
           className="relative z-10 font-[Fraunces,serif] font-medium text-[clamp(2.4rem,7vw,5rem)] leading-[1.05] max-w-[16ch]"
         >
-          Let's Talk
+          {contact.heading}
         </h1>
 
         <p className="ct-subtitle relative z-10 mt-6 max-w-[42ch] text-[#F4EFE6]/75 text-[1.05rem] leading-relaxed">
-          We'd love to hear from you. Send us a message and we'll get back to you soon.
+          {contact.subtext}
         </p>
 
         <div className="ct-hero-cta relative z-10 mt-9">
@@ -367,33 +397,37 @@ const Contact = () => {
             </div>
 
             <div className="space-y-6">
-              {infoRows.map((row) => (
-                <div
-                  key={row.title}
-                  className="ct-row flex items-start gap-5"
-                >
-                  <div className="w-11 h-11 shrink-0 bg-[#C1440E] text-[#F4EFE6] rounded-full flex items-center justify-center">
-                    {row.icon}
-                  </div>
+              {contact.info_rows.map((row) => {
+                const Icon = CONTACT_ICONS[row.icon] || FaLocationArrow;
 
-                  <div className="min-w-0">
-                    <p className="text-xs text-[#B08D57] mb-1">
-                      {row.title}
-                    </p>
+                return (
+                  <div
+                    key={row.title}
+                    className="ct-row flex items-start gap-5"
+                  >
+                    <div className="w-11 h-11 shrink-0 bg-[#C1440E] text-[#F4EFE6] rounded-full flex items-center justify-center">
+                      <Icon />
+                    </div>
 
-                    {row.lines.map((line) => (
-                      <p
-                        key={line}
-                        className={`text-[0.95rem] text-[#F4EFE6]/90 leading-6 ${
-                          row.breakAll ? "break-all" : ""
-                        }`}
-                      >
-                        {line}
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#B08D57] mb-1">
+                        {row.title}
                       </p>
-                    ))}
+
+                      {row.lines.map((line) => (
+                        <p
+                          key={line}
+                          className={`text-[0.95rem] text-[#F4EFE6]/90 leading-6 ${
+                            row.icon === "email" ? "break-all" : ""
+                          }`}
+                        >
+                          {line}
+                        </p>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
           </div>

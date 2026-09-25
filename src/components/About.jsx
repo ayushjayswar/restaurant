@@ -1,11 +1,39 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FaUtensils, FaWineGlassAlt } from "react-icons/fa";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
+
+const BADGE_ICONS = {
+  utensils: FaUtensils,
+  wine: FaWineGlassAlt,
+};
+
+// Shown while /content hasn't loaded yet, or if the request fails.
+const DEFAULT_ABOUT = {
+  eyebrow: "Fork & Flame · Our Story",
+  heading: "Our Story",
+  subheading: "A Culinary Journey",
+  paragraphs: [
+    "Founded in 2010, Fork & Flame brings together world-class chefs and sommeliers to create an unforgettable dining experience. Our philosophy is simple: exceptional food, impeccable service, and a warm atmosphere.",
+    "We source our ingredients from local farmers and producers, ensuring the freshest seasonal dishes that celebrate the region's bounty while supporting our community.",
+  ],
+  image:
+    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
+  badges: [
+    { icon: "utensils", label: "Fine Dining" },
+    { icon: "wine", label: "Wine Pairing" },
+  ],
+};
+
 const About = () => {
+
+    const [about, setAbout] = useState(DEFAULT_ABOUT);
+    const [loaded, setLoaded] = useState(false);
 
     // Refs — section scope + each part of the layout as its own target
     const sectionRef = useRef(null);
@@ -44,19 +72,42 @@ const About = () => {
         }
     };
 
-    const headingWords = "A Culinary Journey".split(" ");
+    // ==============================
+    // GET ABOUT CONTENT FROM BACKEND
+    // (admin-edited text, image, badges)
+    // ==============================
+    useEffect(() => {
+        const fetchContent = async () => {
+            try {
+                const response = await fetch(`${API_URL}/content`);
+                if (!response.ok) return;
 
-    const paragraph1 = "Founded in 2010, Fork & Flame brings together world-class chefs and sommeliers to create an unforgettable dining experience. Our philosophy is simple: exceptional food, impeccable service, and a warm atmosphere.";
+                const result = await response.json();
+                if (result.about) {
+                    setAbout(result.about);
+                }
+            } catch (err) {
+                console.error("Site content fetch error:", err);
+                // silently keep DEFAULT_ABOUT — page still works
+            } finally {
+                setLoaded(true);
+            }
+        };
 
-    const paragraph2 = "We source our ingredients from local farmers and producers, ensuring the freshest seasonal dishes that celebrate the region's bounty while supporting our community.";
+        fetchContent();
+    }, []);
+
+    const headingWords = (about.subheading || "").split(" ");
 
     // ==============================
     // GSAP START
-    // Entrance plays when the section scrolls into view (not just on
-    // mount), so it actually fires even if About sits below the fold.
-    // Reversible on scroll-back-up, like the RoomBooking panels.
+    // Waits for content to be loaded (so refs actually exist), then plays
+    // when the section scrolls into view. Reversible on scroll-back-up,
+    // like the RoomBooking panels.
     // ==============================
     useEffect(() => {
+        if (!loaded) return;
+
         const reduceMotion =
             typeof window !== 'undefined' &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -71,8 +122,6 @@ const About = () => {
                 return;
             }
 
-            // Image starts fully masked (like a curtain) and image itself
-            // is scaled up slightly so the reveal has room to settle.
             gsap.set(imageRef.current, { scale: 1.15 });
             gsap.set(imageWrapRef.current, { clipPath: 'inset(0 100% 0 0)' });
             gsap.set(wordRefs.current, { yPercent: 120 });
@@ -101,13 +150,11 @@ const About = () => {
                     duration: 1.3,
                     ease: 'power3.out',
                 }, '<')
-                // Heading words — each rises up from behind its own mask
                 .to(
                     wordRefs.current,
                     { yPercent: 0, duration: 0.7, stagger: 0.12, ease: 'power4.out' },
                     '-=0.8'
                 )
-                // Paragraphs — soft blur + slide reveal, one after another
                 .to(
                     paraRefs.current,
                     {
@@ -126,7 +173,6 @@ const About = () => {
                     '-=0.2'
                 );
 
-            // Slow parallax drift on the image while the section is in view
             gsap.to(imageRef.current, {
                 yPercent: 8,
                 ease: 'none',
@@ -138,8 +184,6 @@ const About = () => {
                 },
             });
 
-            // A handful of drifting embers in the background, same feel
-            // as the RoomBooking hero
             const field = particlesRef.current;
             if (field) {
                 const count = 12;
@@ -176,13 +220,12 @@ const About = () => {
 
         }, sectionRef);
 
-        return () => ctx.revert(); // GSAP end — kill tweens + ScrollTriggers on unmount
-    }, []);
+        return () => ctx.revert();
+    }, [loaded]);
     // ==============================
     // GSAP END
     // ==============================
 
-    // Small hover-tilt feedback on the badges
     const handleBadgeEnter = (el) => {
         if (!el) return;
         gsap.to(el, { y: -4, scale: 1.04, duration: 0.25, ease: 'power2.out' });
@@ -196,7 +239,7 @@ const About = () => {
         <section
             id='about'
             ref={sectionRef}
-            className='relative bg-[#17110D] text-[#F4EFE6] font-[Inter,system-ui,sans-serif] py-6 overflow-hidden'
+            className='relative bg-[#17110D] text-[#F4EFE6] font-[Inter,system-ui,sans-serif] py-24 overflow-hidden'
         >
             <div ref={particlesRef} className='absolute inset-0 overflow-hidden pointer-events-none' />
 
@@ -205,13 +248,13 @@ const About = () => {
                 {/* Heading section */}
                 <div className='text-center mb-14'>
                     <div ref={eyebrowRef} className='text-[#B08D57] text-sm tracking-wide mb-4'>
-                        Fork &amp; Flame · Our Story
+                        {about.eyebrow}
                     </div>
                     <h1
                         ref={headingRef}
                         className='font-[Fraunces,serif] font-medium text-[clamp(2.2rem,6vw,4rem)] leading-[1.05]'
                     >
-                        Our Story
+                        {about.heading}
                     </h1>
                 </div>
 
@@ -226,7 +269,7 @@ const About = () => {
                             <img
                                 ref={imageRef}
                                 className='w-full h-full object-cover'
-                                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80"
+                                src={about.image}
                                 alt=""
                             />
                         </div>
@@ -246,42 +289,39 @@ const About = () => {
                             ))}
                         </h3>
 
-                        <p ref={addParaRef} className='text-[#F4EFE6]/75 leading-relaxed py-5'>{paragraph1}</p>
-
-                        <p ref={addParaRef} className='text-[#F4EFE6]/75 leading-relaxed pb-5'>{paragraph2}</p>
-
-                        {/* button section div */}
-                        <div className='flex space-x-6 items-center'>
-                            <div
-                                ref={addBadgeRef}
-                                onMouseEnter={(e) => handleBadgeEnter(e.currentTarget)}
-                                onMouseLeave={(e) => handleBadgeLeave(e.currentTarget)}
-                                className='flex items-center gap-3 md:justify-start'
+                        {about.paragraphs.map((paragraph, i) => (
+                            <p
+                                key={i}
+                                ref={addParaRef}
+                                className={`text-[#F4EFE6]/75 leading-relaxed ${i === 0 ? 'py-5' : 'pb-5'}`}
                             >
-                                <div className='w-12 h-12 rounded-full bg-[#C1440E] flex items-center justify-center'>
-                                    <FaUtensils className='text-[#F4EFE6] text-xl' />
-                                </div>
+                                {paragraph}
+                            </p>
+                        ))}
 
-                                <div>
-                                    <span className='text-[#F4EFE6] font-semibold'>Fine Dining</span>
-                                </div>
-                            </div>
+                        {/* badges */}
+                        <div className='flex flex-wrap gap-6 items-center'>
+                            {about.badges.map((badge, i) => {
+                                const Icon = BADGE_ICONS[badge.icon] || FaUtensils;
 
-                            <div
-                                ref={addBadgeRef}
-                                onMouseEnter={(e) => handleBadgeEnter(e.currentTarget)}
-                                onMouseLeave={(e) => handleBadgeLeave(e.currentTarget)}
-                                className='flex items-center gap-3'
-                            >
-                                <div className='w-12 h-12 rounded-full bg-[#C1440E] flex items-center justify-center md:flex'>
-                                    <FaWineGlassAlt className='text-[#F4EFE6] text-xl' />
-                                </div>
+                                return (
+                                    <div
+                                        key={i}
+                                        ref={addBadgeRef}
+                                        onMouseEnter={(e) => handleBadgeEnter(e.currentTarget)}
+                                        onMouseLeave={(e) => handleBadgeLeave(e.currentTarget)}
+                                        className='flex items-center gap-3'
+                                    >
+                                        <div className='w-12 h-12 rounded-full bg-[#C1440E] flex items-center justify-center'>
+                                            <Icon className='text-[#F4EFE6] text-xl' />
+                                        </div>
 
-                                <div>
-                                    <span className='text-[#F4EFE6] font-semibold'>Wine Pairing</span>
-                                </div>
-                            </div>
-
+                                        <div>
+                                            <span className='text-[#F4EFE6] font-semibold'>{badge.label}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
 
                     </div>

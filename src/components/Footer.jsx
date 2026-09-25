@@ -1,11 +1,45 @@
-import React, { useRef, useEffect } from 'react'
-import { FaFacebook, FaInstagram, FaLocationArrow, FaTwitter, FaWhatsapp } from 'react-icons/fa'
+import React, { useRef, useEffect, useState } from 'react'
+import { FaFacebook, FaInstagram, FaTwitter, FaWhatsapp } from 'react-icons/fa'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+// const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://lcd-dressing-jim-oven.trycloudflare.com"
+
+const SOCIAL_ICONS = {
+    facebook: FaFacebook,
+    twitter: FaTwitter,
+    instagram: FaInstagram,
+    whatsapp: FaWhatsapp,
+};
+
+// Shown while /content hasn't loaded yet, or if the request fails.
+const DEFAULT_FOOTER = {
+    tagline: "Experience the finest culinary journey in the heart of the city.",
+    address: "Ujjain Nagri",
+    email: "info@forkandflame.com",
+    socials: [
+        { platform: "facebook", url: "#" },
+        { platform: "twitter", url: "#" },
+        { platform: "instagram", url: "https://www.instagram.com/rashmika_mandanna/?hl=en" },
+        { platform: "whatsapp", url: "#" },
+    ],
+    links: [
+        { label: "Home", url: "/home" },
+        { label: "About", url: "/about" },
+        { label: "Menu", url: "/menu" },
+        { label: "Room", url: "/roombooking" },
+        { label: "Reservation", url: "/reservation" },
+        { label: "Contact", url: "/contact" },
+    ],
+};
+
 const Footer = () => {
+
+    const [footer, setFooter] = useState(DEFAULT_FOOTER);
+    const [loaded, setLoaded] = useState(false);
 
     const footerRef = useRef(null)
     const col1Ref = useRef(null)
@@ -15,15 +49,39 @@ const Footer = () => {
     const iconsRef = useRef(null)
     const copyRef = useRef(null)
 
+    // ==============================
+    // GET FOOTER CONTENT FROM BACKEND
+    // (admin-edited tagline, address, email, socials, links)
+    // ==============================
+    useEffect(() => {
+        const fetchContent = async () => {
+            try {
+                const response = await fetch(`${API_URL}/content`);
+                if (!response.ok) return;
+
+                const result = await response.json();
+                if (result.footer) {
+                    setFooter(result.footer);
+                }
+            } catch (err) {
+                console.error("Site content fetch error:", err);
+            } finally {
+                setLoaded(true);
+            }
+        };
+
+        fetchContent();
+    }, []);
+
     /* ======================================================
        ================  GSAP ANIMATION SECTION  ============
-       (Sirf animation logic yahan hai, JSX ke saath mix nahi hai)
        ====================================================== */
     useEffect(() => {
 
+        if (!loaded) return;
+
         const ctx = gsap.context(() => {
 
-            // Timeline jab footer scroll me visible ho
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: footerRef.current,
@@ -32,7 +90,6 @@ const Footer = () => {
                 }
             })
 
-            // Columns ek ek karke fade + slide up
             tl.from(
                 [col1Ref.current, col2Ref.current, col3Ref.current, col4Ref.current],
                 {
@@ -44,7 +101,6 @@ const Footer = () => {
                 }
             )
 
-            // Social icons pop-in effect
             tl.from(
                 iconsRef.current ? iconsRef.current.children : [],
                 {
@@ -57,7 +113,6 @@ const Footer = () => {
                 '-=0.4'
             )
 
-            // Copyright line halka fade
             tl.from(
                 copyRef.current,
                 {
@@ -68,7 +123,6 @@ const Footer = () => {
                 '-=0.2'
             )
 
-            // Social icons par hover animation (scale + rotate)
             if (iconsRef.current) {
                 const icons = iconsRef.current.querySelectorAll('.social-icon')
                 icons.forEach((icon) => {
@@ -80,7 +134,6 @@ const Footer = () => {
                     icon.addEventListener('mouseenter', enter)
                     icon.addEventListener('mouseleave', leave)
 
-                    // cleanup ke liye listener store
                     icon._enter = enter
                     icon._leave = leave
                 })
@@ -88,7 +141,6 @@ const Footer = () => {
 
         }, footerRef)
 
-        // Cleanup — animations aur listeners hatane ke liye
         return () => {
             if (iconsRef.current) {
                 const icons = iconsRef.current.querySelectorAll('.social-icon')
@@ -99,7 +151,7 @@ const Footer = () => {
             }
             ctx.revert()
         }
-    }, [])
+    }, [loaded])
     /* ================  GSAP SECTION END  ================== */
 
 
@@ -114,7 +166,7 @@ const Footer = () => {
                             <span className='text-red-700'>Flame</span>
                         </h1>
                         <p className='font-semibold  text-white '>
-                            Experience the finest culinary journey in the heart of the city.
+                            {footer.tagline}
                         </p>
                     </div>
 
@@ -123,31 +175,11 @@ const Footer = () => {
                         <h1 className='text-xl  text-white font-semibold mb-4'>Quick Link</h1>
 
                         <ul className='font-semibold text-xl text-white'>
-
-                            <li>
-                                <a href="/home">Home</a>
-                            </li>
-
-                            <li>
-                                <a href="/about">About</a>
-                            </li>
-
-                            <li>
-                                <a href="/menu">Menu</a>
-                            </li>
-
-                             <li>
-                                <a href="/roombooking">Room</a>
-                            </li>
-
-                            <li>
-                                <a href="/reservation">Reservation</a>
-                            </li>
-
-                            <li>
-                                <a href="/contact">Contact</a>
-                            </li>
-
+                            {footer.links.map((link, i) => (
+                                <li key={i}>
+                                    <a href={link.url}>{link.label}</a>
+                                </li>
+                            ))}
                         </ul>
                     </div>
 
@@ -157,8 +189,9 @@ const Footer = () => {
                         <h1 className='font-semibold text-xl
                         mb-4  text-white '>Contact Info</h1>
                         <p className='font-semibold  text-white'>
-                           Ujjain Nagri
-                            info@forkandflame.com
+                           {footer.address}
+                            <br />
+                            {footer.email}
                         </p>
                     </div>
 
@@ -169,30 +202,29 @@ const Footer = () => {
 
                         <div ref={iconsRef} className='flex items-center gap-4 mb-6 '>
 
-                            <div className='social-icon w-12 h-12 text-white bg-red-600 rounded-full flex items-center justify-center cursor-pointer'>
-                                <FaFacebook />
-                            </div>
+                            {footer.socials.map((social, i) => {
+                                const Icon = SOCIAL_ICONS[social.platform] || FaFacebook;
 
-                            <div className='social-icon w-12 h-12 text-white bg-red-600 rounded-full flex items-center justify-center cursor-pointer'>
-                                <FaTwitter />
-                            </div>
-
-                            <div className='social-icon w-12 h-12 text-white bg-red-600 rounded-full flex items-center justify-center cursor-pointer'>
-                                <a href="https://www.instagram.com/rashmika_mandanna/?hl=en"><FaInstagram /></a>
-                            </div>
-
-                            <div className='social-icon w-12 h-12 text-white bg-red-600 rounded-full flex items-center justify-center cursor-pointer'>
-                                <FaWhatsapp />
-                            </div>
-
+                                return (
+                                    <a
+                                        key={i}
+                                        href={social.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className='social-icon w-12 h-12 text-white bg-red-600 rounded-full flex items-center justify-center cursor-pointer'
+                                    >
+                                        <Icon />
+                                    </a>
+                                );
+                            })}
 
                         </div>
 
-                        
+
 
                     </div>
 
-                   
+
 
                 </div>
 

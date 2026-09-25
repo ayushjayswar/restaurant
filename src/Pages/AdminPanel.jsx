@@ -17,6 +17,11 @@ import {
   Pencil,
   Trash2,
   RefreshCw,
+  Home as HomeIcon,
+  Info,
+  PanelBottom,
+  Mail,
+  Save,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -26,6 +31,9 @@ import {
   sendReservationStatusEmail,
   sendRoomStatusEmail,
 } from "../services/EmailService";
+
+import ImageUploadField from "../components/ImageUploadField";
+import DynamicListEditor from "../components/DynamicListEditor";
 
 const AdminPanel = () => {
   const { user, logout, authFetch } = useAuth();
@@ -47,6 +55,10 @@ const AdminPanel = () => {
   const [reservations, setReservations] = useState([]);
   const [activity, setActivity] = useState([]);
 
+  // Home / About / Footer / Contact — site content admin controls
+  const [siteContent, setSiteContent] = useState(null);
+  const [contentSaving, setContentSaving] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const [modal, setModal] = useState(null);
@@ -57,10 +69,6 @@ const AdminPanel = () => {
 
   // ==============================
   // SORT HELPER
-  // Naya item hamesha upar, purana neeche —
-  // status (pending/completed/cancelled) se
-  // farak nahi padta, sirf kab bana usse
-  // order decide hota hai.
   // ==============================
 
   const sortNewestFirst = (data) => {
@@ -97,78 +105,90 @@ const AdminPanel = () => {
         authFetch("/admin/room-bookings"),
         authFetch("/admin/reservations"),
         authFetch("/admin/activity"),
+        authFetch("/admin/content"),
       ]);
 
       // USERS
-      if (
-        results[0].status === "fulfilled" &&
-        results[0].value.ok
-      ) {
+      if (results[0].status === "fulfilled" && results[0].value.ok) {
         const data = await results[0].value.json();
         setUsers(data.users || []);
       }
 
       // FOOD
-      if (
-        results[1].status === "fulfilled" &&
-        results[1].value.ok
-      ) {
+      if (results[1].status === "fulfilled" && results[1].value.ok) {
         const data = await results[1].value.json();
         setFood(data.food || []);
       }
 
       // ROOMS
-      if (
-        results[2].status === "fulfilled" &&
-        results[2].value.ok
-      ) {
+      if (results[2].status === "fulfilled" && results[2].value.ok) {
         const data = await results[2].value.json();
         setRooms(data.rooms || []);
       }
 
       // ORDERS
-      if (
-        results[3].status === "fulfilled" &&
-        results[3].value.ok
-      ) {
+      if (results[3].status === "fulfilled" && results[3].value.ok) {
         const data = await results[3].value.json();
         setOrders(sortNewestFirst(data.orders || []));
       }
 
       // ROOM BOOKINGS
-      if (
-        results[4].status === "fulfilled" &&
-        results[4].value.ok
-      ) {
+      if (results[4].status === "fulfilled" && results[4].value.ok) {
         const data = await results[4].value.json();
-        setRoomBookings(
-          sortNewestFirst(data.room_bookings || [])
-        );
+        setRoomBookings(sortNewestFirst(data.room_bookings || []));
       }
 
       // RESERVATIONS
-      if (
-        results[5].status === "fulfilled" &&
-        results[5].value.ok
-      ) {
+      if (results[5].status === "fulfilled" && results[5].value.ok) {
         const data = await results[5].value.json();
-        setReservations(
-          sortNewestFirst(data.reservations || [])
-        );
+        setReservations(sortNewestFirst(data.reservations || []));
       }
 
       // ACTIVITY
-      if (
-        results[6].status === "fulfilled" &&
-        results[6].value.ok
-      ) {
+      if (results[6].status === "fulfilled" && results[6].value.ok) {
         const data = await results[6].value.json();
         setActivity(data.activity || []);
+      }
+
+      // SITE CONTENT (Home / About / Footer / Contact)
+      if (results[7].status === "fulfilled" && results[7].value.ok) {
+        const data = await results[7].value.json();
+        setSiteContent(data);
       }
     } catch (error) {
       console.error("Admin data error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ==============================
+  // SAVE ONE SITE-CONTENT SECTION
+  // ==============================
+
+  const saveSiteSection = async (section, data) => {
+    setContentSaving(true);
+
+    try {
+      const response = await authFetch("/admin/content", {
+        method: "PUT",
+        body: JSON.stringify({ section, data }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.detail || "Failed to save");
+        return;
+      }
+
+      setSiteContent(result.content);
+      alert("Saved!");
+    } catch (error) {
+      console.error("Site content save error:", error);
+      alert("Something went wrong");
+    } finally {
+      setContentSaving(false);
     }
   };
 
@@ -231,18 +251,13 @@ const AdminPanel = () => {
   // ==============================
 
   const deleteUser = async (email) => {
-    const confirmDelete = window.confirm(
-      `Delete user ${email}?`
-    );
-
+    const confirmDelete = window.confirm(`Delete user ${email}?`);
     if (!confirmDelete) return;
 
     try {
       const response = await authFetch(
         `/admin/users/${encodeURIComponent(email)}`,
-        {
-          method: "DELETE",
-        }
+        { method: "DELETE" }
       );
 
       const result = await response.json();
@@ -267,13 +282,7 @@ const AdminPanel = () => {
     if (!window.confirm("Delete this food item?")) return;
 
     try {
-      const response = await authFetch(
-        `/admin/food/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const response = await authFetch(`/admin/food/${id}`, { method: "DELETE" });
       const result = await response.json();
 
       if (!response.ok) {
@@ -295,13 +304,7 @@ const AdminPanel = () => {
     if (!window.confirm("Delete this room?")) return;
 
     try {
-      const response = await authFetch(
-        `/admin/rooms/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const response = await authFetch(`/admin/rooms/${id}`, { method: "DELETE" });
       const result = await response.json();
 
       if (!response.ok) {
@@ -323,13 +326,7 @@ const AdminPanel = () => {
     if (!window.confirm("Delete this order?")) return;
 
     try {
-      const response = await authFetch(
-        `/admin/orders/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const response = await authFetch(`/admin/orders/${id}`, { method: "DELETE" });
       const result = await response.json();
 
       if (!response.ok) {
@@ -351,13 +348,7 @@ const AdminPanel = () => {
     if (!window.confirm("Delete this booking?")) return;
 
     try {
-      const response = await authFetch(
-        `/admin/room-bookings/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const response = await authFetch(`/admin/room-bookings/${id}`, { method: "DELETE" });
       const result = await response.json();
 
       if (!response.ok) {
@@ -379,13 +370,7 @@ const AdminPanel = () => {
     if (!window.confirm("Delete this reservation?")) return;
 
     try {
-      const response = await authFetch(
-        `/admin/reservations/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const response = await authFetch(`/admin/reservations/${id}`, { method: "DELETE" });
       const result = await response.json();
 
       if (!response.ok) {
@@ -406,15 +391,10 @@ const AdminPanel = () => {
 
   const updateOrderStatus = async (id, status) => {
     try {
-      const response = await authFetch(
-        `/admin/orders/${id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            status,
-          }),
-        }
-      );
+      const response = await authFetch(`/admin/orders/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      });
 
       const result = await response.json();
 
@@ -431,21 +411,14 @@ const AdminPanel = () => {
 
   // ==============================
   // UPDATE ROOM BOOKING STATUS
-  // Admin confirm / cancel / waiting / complete kare tab
-  // customer ko room wali email + owner ko Telegram
   // ==============================
 
   const updateBookingStatus = async (id, status) => {
     try {
-      const response = await authFetch(
-        `/admin/room-bookings/${id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            status,
-          }),
-        }
-      );
+      const response = await authFetch(`/admin/room-bookings/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      });
 
       const result = await response.json();
 
@@ -454,29 +427,16 @@ const AdminPanel = () => {
         return;
       }
 
-      // Backend response mein booking na mile toh
-      // table mein jo booking dikh rahi hai uska data use karte hain
       const existingBooking =
-        roomBookings.find(
-          (b) => String(b.id) === String(id)
-        ) || {};
+        roomBookings.find((b) => String(b.id) === String(id)) || {};
 
       const updatedBooking = {
         ...existingBooking,
         ...(result.booking || result.room_booking || {}),
       };
 
-      const customerEmail =
-        updatedBooking.user_email ||
-        updatedBooking.email ||
-        "";
-
-      // Customer ka naam users list se
-      const customer = users.find(
-        (u) => u.email === customerEmail
-      );
-
-      // Room ka naam rooms list se
+      const customerEmail = updatedBooking.user_email || updatedBooking.email || "";
+      const customer = users.find((u) => u.email === customerEmail);
       const bookedRoom = rooms.find(
         (r) => String(r.id) === String(updatedBooking.room_id)
       );
@@ -487,21 +447,15 @@ const AdminPanel = () => {
           user_email: customerEmail,
           email: customerEmail,
           name: updatedBooking.name || customer?.name || undefined,
-          roomName:
-            bookedRoom?.name ||
-            `Room #${updatedBooking.room_id}`,
+          roomName: bookedRoom?.name || `Room #${updatedBooking.room_id}`,
           check_in: updatedBooking.check_in,
           check_out: updatedBooking.check_out,
           guests: updatedBooking.guests,
           total_amount: updatedBooking.total_amount,
-          // Admin ne jo status select kiya wahi email mein jaayega
           status: status,
         });
       } catch (emailError) {
-        console.error(
-          "Room booking status email failed:",
-          emailError
-        );
+        console.error("Room booking status email failed:", emailError);
         alert(
           "Status updated, but the email to the " +
           "customer could not be sent. " +
@@ -521,15 +475,10 @@ const AdminPanel = () => {
 
   const updateReservationStatus = async (id, status) => {
     try {
-      const response = await authFetch(
-        `/admin/reservations/${id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            status,
-          }),
-        }
-      );
+      const response = await authFetch(`/admin/reservations/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      });
 
       const result = await response.json();
 
@@ -538,17 +487,7 @@ const AdminPanel = () => {
         return;
       }
 
-      // ==============================
-      // SEND STATUS EMAIL TO CUSTOMER
-      // ==============================
-      // This is the only place the
-      // reservation status email goes
-      // out — right after the admin
-      // confirms / puts on waiting /
-      // cancels / completes it.
-
-      const updatedReservation =
-        result.reservation || {};
+      const updatedReservation = result.reservation || {};
 
       try {
         await sendReservationStatusEmail({
@@ -574,23 +513,13 @@ const AdminPanel = () => {
           waiting_position: updatedReservation.waiting_position,
         });
       } catch (emailError) {
-        console.error(
-          "Reservation status email failed:",
-          emailError
-        );
-        // Status update itself succeeded, so we
-        // don't block the UI on email failure —
-        // just let the admin know.
+        console.error("Reservation status email failed:", emailError);
         alert(
           "Status updated, but the email to the " +
           "customer could not be sent."
         );
       }
 
-      // If cancelling/completing freed a table,
-      // someone from the waiting list may have
-      // been auto-promoted to confirmed — email
-      // them too.
       if (result.promoted_reservations?.length) {
         for (const promoted of result.promoted_reservations) {
           try {
@@ -617,10 +546,7 @@ const AdminPanel = () => {
               waiting_position: promoted.waiting_position,
             });
           } catch (emailError) {
-            console.error(
-              "Promoted reservation email failed:",
-              emailError
-            );
+            console.error("Promoted reservation email failed:", emailError);
           }
         }
       }
@@ -637,46 +563,22 @@ const AdminPanel = () => {
   // ==============================
 
   const menuItems = [
-    {
-      id: "dashboard",
-      name: "Dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      id: "users",
-      name: "Users",
-      icon: Users,
-    },
-    {
-      id: "food",
-      name: "Food Menu",
-      icon: UtensilsCrossed,
-    },
-    {
-      id: "rooms",
-      name: "Rooms",
-      icon: Hotel,
-    },
-    {
-      id: "reservations",
-      name: "Reservations",
-      icon: CalendarDays,
-    },
-    {
-      id: "room-bookings",
-      name: "Room Bookings",
-      icon: BedDouble,
-    },
-    {
-      id: "orders",
-      name: "Orders",
-      icon: ShoppingBag,
-    },
-    {
-      id: "activity",
-      name: "Activity",
-      icon: Activity,
-    },
+    { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
+    { id: "users", name: "Users", icon: Users },
+    { id: "food", name: "Food Menu", icon: UtensilsCrossed },
+    { id: "rooms", name: "Rooms", icon: Hotel },
+    { id: "reservations", name: "Reservations", icon: CalendarDays },
+    { id: "room-bookings", name: "Room Bookings", icon: BedDouble },
+    { id: "orders", name: "Orders", icon: ShoppingBag },
+    { id: "activity", name: "Activity", icon: Activity },
+  ];
+
+  // Site content — Home / About / Footer / Contact — separate group
+  const contentMenuItems = [
+    { id: "home-content", name: "Home", icon: HomeIcon },
+    { id: "about-content", name: "About Page", icon: Info },
+    { id: "footer-content", name: "Footer", icon: PanelBottom },
+    { id: "contact-content", name: "Contact", icon: Mail },
   ];
 
   // ==============================
@@ -701,9 +603,7 @@ const AdminPanel = () => {
     const searchValue = search.toLowerCase();
 
     return data.filter((item) =>
-      JSON.stringify(item)
-        .toLowerCase()
-        .includes(searchValue)
+      JSON.stringify(item).toLowerCase().includes(searchValue)
     );
   };
 
@@ -711,22 +611,14 @@ const AdminPanel = () => {
   // NOTIFICATIONS (derived from live data)
   // ==============================
 
-  const pendingOrders = orders.filter(
-    (o) => o.status === "pending"
-  );
-
+  const pendingOrders = orders.filter((o) => o.status === "pending");
   const pendingReservations = reservations.filter(
     (r) => r.status === "pending" || r.status === "waiting"
   );
-
-  const pendingBookings = roomBookings.filter(
-    (b) => b.status === "pending"
-  );
+  const pendingBookings = roomBookings.filter((b) => b.status === "pending");
 
   const notificationCount =
-    pendingOrders.length +
-    pendingReservations.length +
-    pendingBookings.length;
+    pendingOrders.length + pendingReservations.length + pendingBookings.length;
 
   const hasNotifications = notificationCount > 0;
 
@@ -735,6 +627,14 @@ const AdminPanel = () => {
     setShowNotifications(false);
     setSidebarOpen(false);
     setSearch("");
+  };
+
+  const activeTabLabel = () => {
+    const fromMain = menuItems.find((m) => m.id === activeTab);
+    if (fromMain) return fromMain.name;
+    const fromContent = contentMenuItems.find((m) => m.id === activeTab);
+    if (fromContent) return fromContent.name;
+    return activeTab;
   };
 
   // ==============================
@@ -837,14 +737,11 @@ const AdminPanel = () => {
             Management
           </p>
 
-          <div className="space-y-1">
+          <div className="space-y-1 mb-6">
 
             {menuItems.map((item) => {
-
               const Icon = item.icon;
-
-              const active =
-                activeTab === item.id;
+              const active = activeTab === item.id;
 
               return (
                 <button
@@ -866,13 +763,46 @@ const AdminPanel = () => {
                     }
                   `}
                 >
-
                   <Icon size={19} />
+                  <span>{item.name}</span>
+                </button>
+              );
+            })}
 
-                  <span>
-                    {item.name}
-                  </span>
+          </div>
 
+          <p className="text-[11px] uppercase tracking-wider text-gray-500 px-3 mb-3">
+            Site Content
+          </p>
+
+          <div className="space-y-1">
+
+            {contentMenuItems.map((item) => {
+              const Icon = item.icon;
+              const active = activeTab === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => changeTab(item.id)}
+                  className={`
+                    w-full
+                    flex
+                    items-center
+                    gap-3
+                    px-4
+                    py-3
+                    rounded-xl
+                    transition
+                    ${
+                      active
+                        ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                    }
+                  `}
+                >
+                  <Icon size={19} />
+                  <span>{item.name}</span>
                 </button>
               );
             })}
@@ -889,10 +819,7 @@ const AdminPanel = () => {
             onClick={() => navigate("/")}
             className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition"
           >
-            <span className="text-lg">
-              →
-            </span>
-
+            <span className="text-lg">→</span>
             View Website
           </button>
 
@@ -901,7 +828,6 @@ const AdminPanel = () => {
             className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition"
           >
             <LogOut size={18} />
-
             Logout
           </button>
 
@@ -924,9 +850,7 @@ const AdminPanel = () => {
             <div className="flex items-center gap-4">
 
               <button
-                onClick={() =>
-                  setSidebarOpen(true)
-                }
+                onClick={() => setSidebarOpen(true)}
                 className="lg:hidden text-gray-300"
               >
                 <Menu size={24} />
@@ -935,12 +859,7 @@ const AdminPanel = () => {
               <div>
 
                 <h2 className="text-xl sm:text-2xl font-bold">
-
-                  {activeTab === "room-bookings"
-                    ? "Room Bookings"
-                    : activeTab.charAt(0).toUpperCase() +
-                      activeTab.slice(1)}
-
+                  {activeTabLabel()}
                 </h2>
 
                 <p className="hidden sm:block text-sm text-gray-500">
@@ -955,19 +874,20 @@ const AdminPanel = () => {
 
               {/* SEARCH */}
 
-              {activeTab !== "dashboard" && (
+              {![
+                "dashboard",
+                "home-content",
+                "about-content",
+                "footer-content",
+                "contact-content",
+              ].includes(activeTab) && (
                 <div className="hidden md:flex items-center bg-gray-900 border border-gray-800 rounded-xl px-3">
 
-                  <Search
-                    size={17}
-                    className="text-gray-500"
-                  />
+                  <Search size={17} className="text-gray-500" />
 
                   <input
                     value={search}
-                    onChange={(e) =>
-                      setSearch(e.target.value)
-                    }
+                    onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search..."
                     className="w-40 lg:w-56 bg-transparent outline-none px-3 py-2 text-sm text-white"
                   />
@@ -982,14 +902,7 @@ const AdminPanel = () => {
                 className="p-2.5 bg-gray-900 border border-gray-800 rounded-xl hover:bg-gray-800 transition"
                 title="Refresh"
               >
-                <RefreshCw
-                  size={18}
-                  className={
-                    loading
-                      ? "animate-spin"
-                      : ""
-                  }
-                />
+                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
               </button>
 
               {/* NOTIFICATION */}
@@ -997,9 +910,7 @@ const AdminPanel = () => {
               <div className="relative">
 
                 <button
-                  onClick={() =>
-                    setShowNotifications((prev) => !prev)
-                  }
+                  onClick={() => setShowNotifications((prev) => !prev)}
                   className="relative p-2.5 bg-gray-900 border border-gray-800 rounded-xl hover:bg-gray-800 transition"
                   title="Notifications"
                 >
@@ -1014,8 +925,6 @@ const AdminPanel = () => {
 
                 {showNotifications && (
                   <>
-
-                    {/* click-outside to close */}
                     <div
                       onClick={() => setShowNotifications(false)}
                       className="fixed inset-0 z-40"
@@ -1024,9 +933,7 @@ const AdminPanel = () => {
                     <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50">
 
                       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-                        <span className="font-semibold text-sm">
-                          Notifications
-                        </span>
+                        <span className="font-semibold text-sm">Notifications</span>
 
                         {hasNotifications && (
                           <span className="text-xs text-gray-500">
@@ -1046,14 +953,10 @@ const AdminPanel = () => {
                         {pendingOrders.map((o) => (
                           <button
                             key={`order-${o.id}`}
-                            onClick={() =>
-                              goToTabFromNotification("orders")
-                            }
+                            onClick={() => goToTabFromNotification("orders")}
                             className="w-full text-left px-4 py-3 text-sm hover:bg-gray-800/50 transition"
                           >
-                            <p className="text-white font-medium">
-                              New order #{o.id}
-                            </p>
+                            <p className="text-white font-medium">New order #{o.id}</p>
                             <p className="text-gray-500 text-xs mt-0.5">
                               {o.user_email || "-"} · ₹{o.total_amount || 0}
                             </p>
@@ -1063,9 +966,7 @@ const AdminPanel = () => {
                         {pendingReservations.map((r) => (
                           <button
                             key={`res-${r.id}`}
-                            onClick={() =>
-                              goToTabFromNotification("reservations")
-                            }
+                            onClick={() => goToTabFromNotification("reservations")}
                             className="w-full text-left px-4 py-3 text-sm hover:bg-gray-800/50 transition"
                           >
                             <p className="text-white font-medium">
@@ -1081,14 +982,10 @@ const AdminPanel = () => {
                         {pendingBookings.map((b) => (
                           <button
                             key={`booking-${b.id}`}
-                            onClick={() =>
-                              goToTabFromNotification("room-bookings")
-                            }
+                            onClick={() => goToTabFromNotification("room-bookings")}
                             className="w-full text-left px-4 py-3 text-sm hover:bg-gray-800/50 transition"
                           >
-                            <p className="text-white font-medium">
-                              Room booking #{b.id}
-                            </p>
+                            <p className="text-white font-medium">Room booking #{b.id}</p>
                             <p className="text-gray-500 text-xs mt-0.5">
                               {b.user_email || "-"}
                             </p>
@@ -1098,7 +995,6 @@ const AdminPanel = () => {
                       </div>
 
                     </div>
-
                   </>
                 )}
 
@@ -1198,18 +1094,14 @@ const AdminPanel = () => {
             <RoomBookingsPage
               data={filterData(roomBookings)}
               onDelete={deleteRoomBooking}
-              onStatusChange={
-                updateBookingStatus
-              }
+              onStatusChange={updateBookingStatus}
             />
           )}
 
           {/* ACTIVITY */}
 
           {activeTab === "activity" && (
-            <ActivityPage
-              data={filterData(activity)}
-            />
+            <ActivityPage data={filterData(activity)} />
           )}
 
           {/* RESERVATIONS */}
@@ -1219,6 +1111,49 @@ const AdminPanel = () => {
               data={filterData(reservations)}
               onDelete={deleteReservation}
               onStatusChange={updateReservationStatus}
+            />
+          )}
+
+          {/* SITE CONTENT — loading guard for all four */}
+
+          {["home-content", "about-content", "footer-content", "contact-content"].includes(activeTab) &&
+            !siteContent && (
+              <div className="text-center py-16 text-gray-500">
+                Loading content...
+              </div>
+            )}
+
+          {activeTab === "home-content" && siteContent && (
+            <HomeContentPage
+              content={siteContent.hero}
+              onSave={(data) => saveSiteSection("hero", data)}
+              saving={contentSaving}
+              authFetch={authFetch}
+            />
+          )}
+
+          {activeTab === "about-content" && siteContent && (
+            <AboutContentPage
+              content={siteContent.about}
+              onSave={(data) => saveSiteSection("about", data)}
+              saving={contentSaving}
+              authFetch={authFetch}
+            />
+          )}
+
+          {activeTab === "footer-content" && siteContent && (
+            <FooterContentPage
+              content={siteContent.footer}
+              onSave={(data) => saveSiteSection("footer", data)}
+              saving={contentSaving}
+            />
+          )}
+
+          {activeTab === "contact-content" && siteContent && (
+            <ContactContentPage
+              content={siteContent.contact}
+              onSave={(data) => saveSiteSection("contact", data)}
+              saving={contentSaving}
             />
           )}
 
@@ -1278,47 +1213,17 @@ const Dashboard = ({
 }) => {
 
   const stats = [
-    {
-      title: "Total Users",
-      value: users.length,
-      icon: Users,
-    },
-    {
-      title: "Food Items",
-      value: food.length,
-      icon: UtensilsCrossed,
-    },
-    {
-      title: "Total Rooms",
-      value: rooms.length,
-      icon: Hotel,
-    },
-    {
-      title: "Orders",
-      value: orders.length,
-      icon: ShoppingBag,
-    },
-    {
-      title: "Room Bookings",
-      value: roomBookings.length,
-      icon: BedDouble,
-    },
-    {
-      title: "Reservations",
-      value: reservations.length,
-      icon: CalendarDays,
-    },
-    {
-      title: "Activities",
-      value: activity.length,
-      icon: Activity,
-    },
+    { title: "Total Users", value: users.length, icon: Users },
+    { title: "Food Items", value: food.length, icon: UtensilsCrossed },
+    { title: "Total Rooms", value: rooms.length, icon: Hotel },
+    { title: "Orders", value: orders.length, icon: ShoppingBag },
+    { title: "Room Bookings", value: roomBookings.length, icon: BedDouble },
+    { title: "Reservations", value: reservations.length, icon: CalendarDays },
+    { title: "Activities", value: activity.length, icon: Activity },
   ];
 
   return (
     <div className="space-y-7">
-
-      {/* WELCOME */}
 
       <div className="rounded-2xl p-6 sm:p-8 bg-gradient-to-r from-red-600/20 via-gray-900 to-gray-900 border border-red-500/20">
 
@@ -1336,12 +1241,9 @@ const Dashboard = ({
 
       </div>
 
-      {/* STATS */}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
 
         {stats.map((stat) => {
-
           const Icon = stat.icon;
 
           return (
@@ -1354,13 +1256,9 @@ const Dashboard = ({
                 <Icon size={21} />
               </div>
 
-              <p className="text-gray-500 text-sm mt-5">
-                {stat.title}
-              </p>
+              <p className="text-gray-500 text-sm mt-5">{stat.title}</p>
 
-              <h3 className="text-3xl font-bold mt-1">
-                {stat.value}
-              </h3>
+              <h3 className="text-3xl font-bold mt-1">{stat.value}</h3>
 
             </div>
           );
@@ -1368,13 +1266,9 @@ const Dashboard = ({
 
       </div>
 
-      {/* QUICK ACTION */}
-
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
 
-        <h3 className="text-lg font-semibold">
-          Quick Actions
-        </h3>
+        <h3 className="text-lg font-semibold">Quick Actions</h3>
 
         <p className="text-sm text-gray-500 mt-1">
           Quickly open management sections.
@@ -1382,36 +1276,13 @@ const Dashboard = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
 
-          <QuickButton
-            icon={Users}
-            title="Users"
-            onClick={() =>
-              setActiveTab("users")
-            }
-          />
-
-          <QuickButton
-            icon={UtensilsCrossed}
-            title="Food"
-            onClick={() =>
-              setActiveTab("food")
-            }
-          />
-
-          <QuickButton
-            icon={Hotel}
-            title="Rooms"
-            onClick={() =>
-              setActiveTab("rooms")
-            }
-          />
-
+          <QuickButton icon={Users} title="Users" onClick={() => setActiveTab("users")} />
+          <QuickButton icon={UtensilsCrossed} title="Food" onClick={() => setActiveTab("food")} />
+          <QuickButton icon={Hotel} title="Rooms" onClick={() => setActiveTab("rooms")} />
           <QuickButton
             icon={CalendarDays}
             title="Reservations"
-            onClick={() =>
-              setActiveTab("reservations")
-            }
+            onClick={() => setActiveTab("reservations")}
           />
 
         </div>
@@ -1427,13 +1298,7 @@ const Dashboard = ({
    USERS PAGE
 ===================================================== */
 
-const UsersPage = ({
-  data,
-  onDelete,
-  onEdit,
-  onAdd,
-}) => {
-
+const UsersPage = ({ data, onDelete, onEdit, onAdd }) => {
   return (
     <ManagementLayout
       title="Users"
@@ -1441,61 +1306,25 @@ const UsersPage = ({
       button="Add User"
       onAdd={onAdd}
     >
-
-      <Table
-        headers={[
-          "Name",
-          "Email",
-          "Username",
-          "Role",
-          "Actions",
-        ]}
-      >
-
+      <Table headers={["Name", "Email", "Username", "Role", "Actions"]}>
         {data.length === 0 ? (
           <EmptyRow colSpan={5} />
         ) : (
           data.map((item) => (
-            <tr
-              key={item.email}
-              className="border-t border-gray-800 hover:bg-gray-800/40"
-            >
-
-              <td className="px-5 py-4 font-medium">
-                {item.name}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.email}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.username}
-              </td>
-
+            <tr key={item.email} className="border-t border-gray-800 hover:bg-gray-800/40">
+              <td className="px-5 py-4 font-medium">{item.name}</td>
+              <td className="px-5 py-4 text-gray-400">{item.email}</td>
+              <td className="px-5 py-4 text-gray-400">{item.username}</td>
               <td className="px-5 py-4">
-                <StatusBadge
-                  status={item.role || "user"}
-                />
+                <StatusBadge status={item.role || "user"} />
               </td>
-
               <td className="px-5 py-4">
-                <ActionButtons
-                  onEdit={() =>
-                    onEdit(item)
-                  }
-                  onDelete={() =>
-                    onDelete(item.email)
-                  }
-                />
+                <ActionButtons onEdit={() => onEdit(item)} onDelete={() => onDelete(item.email)} />
               </td>
-
             </tr>
           ))
         )}
-
       </Table>
-
     </ManagementLayout>
   );
 };
@@ -1505,13 +1334,7 @@ const UsersPage = ({
    FOOD PAGE
 ===================================================== */
 
-const FoodPage = ({
-  data,
-  onDelete,
-  onEdit,
-  onAdd,
-}) => {
-
+const FoodPage = ({ data, onDelete, onEdit, onAdd }) => {
   return (
     <ManagementLayout
       title="Food Menu"
@@ -1519,69 +1342,25 @@ const FoodPage = ({
       button="Add Food"
       onAdd={onAdd}
     >
-
-      <Table
-        headers={[
-          "Food",
-          "Category",
-          "Price",
-          "Available",
-          "Actions",
-        ]}
-      >
-
+      <Table headers={["Food", "Category", "Price", "Available", "Actions"]}>
         {data.length === 0 ? (
           <EmptyRow colSpan={5} />
         ) : (
           data.map((item) => (
-            <tr
-              key={item.id}
-              className="border-t border-gray-800 hover:bg-gray-800/40"
-            >
-
-              <td className="px-5 py-4 font-medium">
-                {item.name}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.category || "-"}
-              </td>
-
+            <tr key={item.id} className="border-t border-gray-800 hover:bg-gray-800/40">
+              <td className="px-5 py-4 font-medium">{item.name}</td>
+              <td className="px-5 py-4 text-gray-400">{item.category || "-"}</td>
+              <td className="px-5 py-4">₹{item.price}</td>
               <td className="px-5 py-4">
-                ₹{item.price}
+                <StatusBadge status={item.available ? "Available" : "Unavailable"} />
               </td>
-
               <td className="px-5 py-4">
-
-                <StatusBadge
-                  status={
-                    item.available
-                      ? "Available"
-                      : "Unavailable"
-                  }
-                />
-
+                <ActionButtons onEdit={() => onEdit(item)} onDelete={() => onDelete(item.id)} />
               </td>
-
-              <td className="px-5 py-4">
-
-                <ActionButtons
-                  onEdit={() =>
-                    onEdit(item)
-                  }
-                  onDelete={() =>
-                    onDelete(item.id)
-                  }
-                />
-
-              </td>
-
             </tr>
           ))
         )}
-
       </Table>
-
     </ManagementLayout>
   );
 };
@@ -1591,13 +1370,7 @@ const FoodPage = ({
    ROOMS PAGE
 ===================================================== */
 
-const RoomsPage = ({
-  data,
-  onDelete,
-  onEdit,
-  onAdd,
-}) => {
-
+const RoomsPage = ({ data, onDelete, onEdit, onAdd }) => {
   return (
     <ManagementLayout
       title="Rooms"
@@ -1605,71 +1378,27 @@ const RoomsPage = ({
       button="Add Room"
       onAdd={onAdd}
     >
-
-      <Table
-        headers={[
-          "Room",
-          "Price",
-          "Facilities",
-          "Available",
-          "Actions",
-        ]}
-      >
-
+      <Table headers={["Room", "Price", "Facilities", "Available", "Actions"]}>
         {data.length === 0 ? (
           <EmptyRow colSpan={5} />
         ) : (
           data.map((item) => (
-            <tr
-              key={item.id}
-              className="border-t border-gray-800 hover:bg-gray-800/40"
-            >
-
-              <td className="px-5 py-4 font-medium">
-                {item.name}
-              </td>
-
-              <td className="px-5 py-4">
-                ₹{item.price}
-              </td>
-
+            <tr key={item.id} className="border-t border-gray-800 hover:bg-gray-800/40">
+              <td className="px-5 py-4 font-medium">{item.name}</td>
+              <td className="px-5 py-4">₹{item.price}</td>
               <td className="px-5 py-4 text-gray-400 max-w-xs">
-                {Array.isArray(item.facilities)
-                  ? item.facilities.join(", ")
-                  : "-"}
+                {Array.isArray(item.facilities) ? item.facilities.join(", ") : "-"}
               </td>
-
               <td className="px-5 py-4">
-
-                <StatusBadge
-                  status={
-                    item.available
-                      ? "Available"
-                      : "Unavailable"
-                  }
-                />
-
+                <StatusBadge status={item.available ? "Available" : "Unavailable"} />
               </td>
-
               <td className="px-5 py-4">
-
-                <ActionButtons
-                  onEdit={() =>
-                    onEdit(item)
-                  }
-                  onDelete={() =>
-                    onDelete(item.id)
-                  }
-                />
-
+                <ActionButtons onEdit={() => onEdit(item)} onDelete={() => onDelete(item.id)} />
               </td>
-
             </tr>
           ))
         )}
-
       </Table>
-
     </ManagementLayout>
   );
 };
@@ -1679,104 +1408,42 @@ const RoomsPage = ({
    ORDERS PAGE
 ===================================================== */
 
-const OrdersPage = ({
-  data,
-  onDelete,
-  onStatusChange,
-}) => {
-
+const OrdersPage = ({ data, onDelete, onStatusChange }) => {
   return (
-    <ManagementLayout
-      title="Orders"
-      description="Manage customer orders and status."
-    >
-
-      <Table
-        headers={[
-          "Order ID",
-          "Customer",
-          "Amount",
-          "Status",
-          "Actions",
-        ]}
-      >
-
+    <ManagementLayout title="Orders" description="Manage customer orders and status.">
+      <Table headers={["Order ID", "Customer", "Amount", "Status", "Actions"]}>
         {data.length === 0 ? (
           <EmptyRow colSpan={5} />
         ) : (
           data.map((item) => (
-            <tr
-              key={item.id}
-              className="border-t border-gray-800 hover:bg-gray-800/40"
-            >
-
-              <td className="px-5 py-4 font-medium">
-                #{item.id}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.user_email || "-"}
-              </td>
-
+            <tr key={item.id} className="border-t border-gray-800 hover:bg-gray-800/40">
+              <td className="px-5 py-4 font-medium">#{item.id}</td>
+              <td className="px-5 py-4 text-gray-400">{item.user_email || "-"}</td>
+              <td className="px-5 py-4">₹{item.total_amount || 0}</td>
               <td className="px-5 py-4">
-                ₹{item.total_amount || 0}
-              </td>
-
-              <td className="px-5 py-4">
-
                 <select
-                  value={
-                    item.status ||
-                    "pending"
-                  }
-                  onChange={(e) =>
-                    onStatusChange(
-                      item.id,
-                      e.target.value
-                    )
-                  }
+                  value={item.status || "pending"}
+                  onChange={(e) => onStatusChange(item.id, e.target.value)}
                   className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 outline-none text-sm"
                 >
-
-                  <option value="pending">
-                    Pending
-                  </option>
-
-                  <option value="preparing">
-                    Preparing
-                  </option>
-
-                  <option value="completed">
-                    Completed
-                  </option>
-
-                  <option value="cancelled">
-                    Cancelled
-                  </option>
-
+                  <option value="pending">Pending</option>
+                  <option value="preparing">Preparing</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
-
               </td>
-
               <td className="px-5 py-4">
-
                 <button
-                  onClick={() =>
-                    onDelete(item.id)
-                  }
+                  onClick={() => onDelete(item.id)}
                   className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
                 >
                   <Trash2 size={17} />
                 </button>
-
               </td>
-
             </tr>
           ))
         )}
-
       </Table>
-
     </ManagementLayout>
   );
 };
@@ -1786,120 +1453,45 @@ const OrdersPage = ({
    ROOM BOOKINGS
 ===================================================== */
 
-const RoomBookingsPage = ({
-  data,
-  onDelete,
-  onStatusChange,
-}) => {
-
+const RoomBookingsPage = ({ data, onDelete, onStatusChange }) => {
   return (
-    <ManagementLayout
-      title="Room Bookings"
-      description="Manage customer room bookings."
-    >
-
-      <Table
-        headers={[
-          "Booking",
-          "Customer",
-          "Room",
-          "Check In",
-          "Check Out",
-          "Status",
-          "Actions",
-        ]}
-      >
-
+    <ManagementLayout title="Room Bookings" description="Manage customer room bookings.">
+      <Table headers={["Booking", "Customer", "Room", "Check In", "Check Out", "Status", "Actions"]}>
         {data.length === 0 ? (
           <EmptyRow colSpan={7} />
         ) : (
           data.map((item) => (
-            <tr
-              key={item.id}
-              className="border-t border-gray-800 hover:bg-gray-800/40"
-            >
-
-              <td className="px-5 py-4 font-medium">
-                #{item.id}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.user_email || "-"}
-              </td>
-
+            <tr key={item.id} className="border-t border-gray-800 hover:bg-gray-800/40">
+              <td className="px-5 py-4 font-medium">#{item.id}</td>
+              <td className="px-5 py-4 text-gray-400">{item.user_email || "-"}</td>
+              <td className="px-5 py-4">{item.room_id ? `Room #${item.room_id}` : "-"}</td>
+              <td className="px-5 py-4 text-gray-400">{item.check_in || "-"}</td>
+              <td className="px-5 py-4 text-gray-400">{item.check_out || "-"}</td>
               <td className="px-5 py-4">
-                {item.room_id
-                  ? `Room #${item.room_id}`
-                  : "-"}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.check_in || "-"}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.check_out || "-"}
-              </td>
-
-              <td className="px-5 py-4">
-
                 <select
-                  value={
-                    item.status ||
-                    "pending"
-                  }
-                  onChange={(e) =>
-                    onStatusChange(
-                      item.id,
-                      e.target.value
-                    )
-                  }
+                  value={item.status || "pending"}
+                  onChange={(e) => onStatusChange(item.id, e.target.value)}
                   className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 outline-none text-sm"
                 >
-
-                  <option value="pending">
-                    Pending
-                  </option>
-
-                  <option value="confirmed">
-                    Confirmed
-                  </option>
-
-                  <option value="waiting">
-                    Waiting
-                  </option>
-
-                  <option value="completed">
-                    Completed
-                  </option>
-
-                  <option value="cancelled">
-                    Cancelled
-                  </option>
-
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="waiting">Waiting</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
-
               </td>
-
               <td className="px-5 py-4">
-
                 <button
-                  onClick={() =>
-                    onDelete(item.id)
-                  }
+                  onClick={() => onDelete(item.id)}
                   className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20"
                 >
                   <Trash2 size={17} />
                 </button>
-
               </td>
-
             </tr>
           ))
         )}
-
       </Table>
-
     </ManagementLayout>
   );
 };
@@ -1910,59 +1502,26 @@ const RoomBookingsPage = ({
 ===================================================== */
 
 const ActivityPage = ({ data }) => {
-
   return (
-    <ManagementLayout
-      title="Activity"
-      description="View recent user and admin activity."
-    >
-
-      <Table
-        headers={[
-          "Action",
-          "User",
-          "Details",
-          "Time",
-        ]}
-      >
-
+    <ManagementLayout title="Activity" description="View recent user and admin activity.">
+      <Table headers={["Action", "User", "Details", "Time"]}>
         {data.length === 0 ? (
           <EmptyRow colSpan={4} />
         ) : (
           data.map((item, index) => (
-            <tr
-              key={item.id || index}
-              className="border-t border-gray-800"
-            >
-
+            <tr key={item.id || index} className="border-t border-gray-800">
               <td className="px-5 py-4">
-
                 <span className="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 text-xs">
                   {item.action || "-"}
                 </span>
-
               </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.user_email || "-"}
-              </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.details || "-"}
-              </td>
-
-              <td className="px-5 py-4 text-gray-500">
-                {item.timestamp ||
-                  item.time ||
-                  "-"}
-              </td>
-
+              <td className="px-5 py-4 text-gray-400">{item.user_email || "-"}</td>
+              <td className="px-5 py-4 text-gray-400">{item.details || "-"}</td>
+              <td className="px-5 py-4 text-gray-500">{item.timestamp || item.time || "-"}</td>
             </tr>
           ))
         )}
-
       </Table>
-
     </ManagementLayout>
   );
 };
@@ -1972,144 +1531,345 @@ const ActivityPage = ({ data }) => {
    RESERVATIONS
 ===================================================== */
 
-const ReservationsPage = ({
-  data,
-  onDelete,
-  onStatusChange,
-}) => {
-
+const ReservationsPage = ({ data, onDelete, onStatusChange }) => {
   return (
-    <ManagementLayout
-      title="Reservations"
-      description="Manage table reservations and waiting list."
-    >
-
-      <Table
-        headers={[
-          "ID",
-          "Customer",
-          "Contact",
-          "Date & Time",
-          "Guests",
-          "Table",
-          "Status",
-          "Actions",
-        ]}
-      >
-
+    <ManagementLayout title="Reservations" description="Manage table reservations and waiting list.">
+      <Table headers={["ID", "Customer", "Contact", "Date & Time", "Guests", "Table", "Status", "Actions"]}>
         {data.length === 0 ? (
           <EmptyRow colSpan={8} />
         ) : (
           data.map((item) => (
-            <tr
-              key={item.id}
-              className="border-t border-gray-800 hover:bg-gray-800/40"
-            >
-
-              <td className="px-5 py-4 font-medium">
-                #{item.id}
-              </td>
-
+            <tr key={item.id} className="border-t border-gray-800 hover:bg-gray-800/40">
+              <td className="px-5 py-4 font-medium">#{item.id}</td>
               <td className="px-5 py-4">
-                <p className="font-medium">
-                  {item.name || "-"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {item.user_email || "-"}
-                </p>
+                <p className="font-medium">{item.name || "-"}</p>
+                <p className="text-xs text-gray-500">{item.user_email || "-"}</p>
               </td>
-
-              <td className="px-5 py-4 text-gray-400">
-                {item.phone || "-"}
-              </td>
-
+              <td className="px-5 py-4 text-gray-400">{item.phone || "-"}</td>
               <td className="px-5 py-4 text-gray-400">
                 <p>{item.date || "-"}</p>
-                <p className="text-xs text-gray-500">
-                  {item.time || "-"}
-                </p>
+                <p className="text-xs text-gray-500">{item.time || "-"}</p>
               </td>
-
-              <td className="px-5 py-4">
-                {item.guests ?? "-"}
-              </td>
-
+              <td className="px-5 py-4">{item.guests ?? "-"}</td>
               <td className="px-5 py-4">
                 {item.status === "waiting" ? (
                   <span className="text-yellow-400 text-xs font-medium">
                     Waiting #{item.waiting_position ?? "-"}
                   </span>
                 ) : item.status === "pending" ? (
-                  <span className="text-gray-500 text-xs">
-                    Not assigned yet
-                  </span>
+                  <span className="text-gray-500 text-xs">Not assigned yet</span>
                 ) : item.table_number ? (
                   `Table ${item.table_number}`
                 ) : (
                   "-"
                 )}
               </td>
-
               <td className="px-5 py-4">
-
                 <select
-                  value={
-                    item.status ||
-                    "pending"
-                  }
-                  onChange={(e) =>
-                    onStatusChange(
-                      item.id,
-                      e.target.value
-                    )
-                  }
+                  value={item.status || "pending"}
+                  onChange={(e) => onStatusChange(item.id, e.target.value)}
                   className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 outline-none text-sm"
                 >
-
-                  <option value="pending">
-                    Pending
-                  </option>
-
-                  <option value="confirmed">
-                    Confirmed
-                  </option>
-
-                  <option value="waiting">
-                    Waiting
-                  </option>
-
-                  <option value="completed">
-                    Completed
-                  </option>
-
-                  <option value="cancelled">
-                    Cancelled
-                  </option>
-
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="waiting">Waiting</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
-
               </td>
-
               <td className="px-5 py-4">
-
                 <button
-                  onClick={() =>
-                    onDelete(item.id)
-                  }
+                  onClick={() => onDelete(item.id)}
                   className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
                 >
                   <Trash2 size={17} />
                 </button>
-
               </td>
-
             </tr>
           ))
         )}
-
       </Table>
-
     </ManagementLayout>
+  );
+};
+
+
+/* =====================================================
+   SITE CONTENT — shared layout with a Save button
+===================================================== */
+
+const ContentLayout = ({ title, description, onSave, saving, children }) => {
+  return (
+    <div className="space-y-6 max-w-3xl">
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+        <div>
+          <h1 className="text-2xl font-bold">{title}</h1>
+          <p className="text-sm text-gray-500 mt-1">{description}</p>
+        </div>
+
+        <button
+          onClick={onSave}
+          disabled={saving}
+          className="flex items-center justify-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl font-medium transition"
+        >
+          <Save size={18} />
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
+        {children}
+      </div>
+
+    </div>
+  );
+};
+
+
+/* =====================================================
+   HOME (HERO) CONTENT
+===================================================== */
+
+const HomeContentPage = ({ content, onSave, saving, authFetch }) => {
+  const [form, setForm] = useState(content);
+
+  return (
+    <ContentLayout
+      title="Home"
+      description="Controls the hero section on your homepage."
+      onSave={() => onSave(form)}
+      saving={saving}
+    >
+
+      <Input
+        label="Heading"
+        value={form.heading}
+        onChange={(value) => setForm({ ...form, heading: value })}
+      />
+
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">Subtext</label>
+        <textarea
+          value={form.subtext}
+          onChange={(e) => setForm({ ...form, subtext: e.target.value })}
+          rows={3}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white resize-none"
+        />
+      </div>
+
+      <ImageUploadField
+        label="Background Image"
+        value={form.background_image}
+        onChange={(url) => setForm({ ...form, background_image: url })}
+        authFetch={authFetch}
+      />
+
+      <DynamicListEditor
+        label="Buttons"
+        addLabel="Add Button"
+        items={form.buttons}
+        onChange={(buttons) => setForm({ ...form, buttons })}
+        emptyItem={{ text: "New Button", link: "/" }}
+        fields={[
+          { key: "text", label: "Button Text", type: "text" },
+          { key: "link", label: "Link (e.g. /reservation)", type: "text" },
+        ]}
+      />
+
+    </ContentLayout>
+  );
+};
+
+
+/* =====================================================
+   ABOUT PAGE CONTENT
+===================================================== */
+
+const ABOUT_BADGE_ICONS = ["utensils", "wine"];
+
+const AboutContentPage = ({ content, onSave, saving, authFetch }) => {
+  const [form, setForm] = useState(content);
+
+  // paragraphs are plain strings — wrap as {text} rows just for the editor
+  const paragraphItems = (form.paragraphs || []).map((text) => ({ text }));
+
+  return (
+    <ContentLayout
+      title="About Page"
+      description="Controls the 'Our Story' section."
+      onSave={() => onSave(form)}
+      saving={saving}
+    >
+
+      <Input
+        label="Eyebrow (small label above heading)"
+        value={form.eyebrow}
+        onChange={(value) => setForm({ ...form, eyebrow: value })}
+      />
+
+      <Input
+        label="Heading"
+        value={form.heading}
+        onChange={(value) => setForm({ ...form, heading: value })}
+      />
+
+      <Input
+        label="Sub-heading"
+        value={form.subheading}
+        onChange={(value) => setForm({ ...form, subheading: value })}
+      />
+
+      <ImageUploadField
+        label="Story Image"
+        value={form.image}
+        onChange={(url) => setForm({ ...form, image: url })}
+        authFetch={authFetch}
+      />
+
+      <DynamicListEditor
+        label="Paragraphs"
+        addLabel="Add Paragraph"
+        items={paragraphItems}
+        onChange={(items) => setForm({ ...form, paragraphs: items.map((i) => i.text) })}
+        emptyItem={{ text: "" }}
+        fields={[{ key: "text", label: "Paragraph", type: "textarea", fullWidth: true }]}
+      />
+
+      <DynamicListEditor
+        label="Badges"
+        addLabel="Add Badge"
+        items={form.badges}
+        onChange={(badges) => setForm({ ...form, badges })}
+        emptyItem={{ icon: "utensils", label: "New Badge" }}
+        fields={[
+          { key: "icon", label: "Icon", type: "select", options: ABOUT_BADGE_ICONS },
+          { key: "label", label: "Label", type: "text" },
+        ]}
+      />
+
+    </ContentLayout>
+  );
+};
+
+
+/* =====================================================
+   FOOTER CONTENT
+===================================================== */
+
+const FOOTER_SOCIAL_PLATFORMS = ["facebook", "twitter", "instagram", "whatsapp"];
+
+const FooterContentPage = ({ content, onSave, saving }) => {
+  const [form, setForm] = useState(content);
+
+  return (
+    <ContentLayout
+      title="Footer"
+      description="Controls the footer shown on every page."
+      onSave={() => onSave(form)}
+      saving={saving}
+    >
+
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">Tagline</label>
+        <textarea
+          value={form.tagline}
+          onChange={(e) => setForm({ ...form, tagline: e.target.value })}
+          rows={2}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white resize-none"
+        />
+      </div>
+
+      <Input
+        label="Address"
+        value={form.address}
+        onChange={(value) => setForm({ ...form, address: value })}
+      />
+
+      <Input
+        label="Email"
+        value={form.email}
+        onChange={(value) => setForm({ ...form, email: value })}
+      />
+
+      <DynamicListEditor
+        label="Social Links"
+        addLabel="Add Social"
+        items={form.socials}
+        onChange={(socials) => setForm({ ...form, socials })}
+        emptyItem={{ platform: "facebook", url: "#" }}
+        fields={[
+          { key: "platform", label: "Platform", type: "select", options: FOOTER_SOCIAL_PLATFORMS },
+          { key: "url", label: "URL", type: "text" },
+        ]}
+      />
+
+      <DynamicListEditor
+        label="Quick Links"
+        addLabel="Add Link"
+        items={form.links}
+        onChange={(links) => setForm({ ...form, links })}
+        emptyItem={{ label: "New Link", url: "/" }}
+        fields={[
+          { key: "label", label: "Label", type: "text" },
+          { key: "url", label: "URL", type: "text" },
+        ]}
+      />
+
+    </ContentLayout>
+  );
+};
+
+
+/* =====================================================
+   CONTACT CONTENT
+===================================================== */
+
+const CONTACT_ICONS = ["location", "phone", "email", "time"];
+
+const ContactContentPage = ({ content, onSave, saving }) => {
+  const [form, setForm] = useState(content);
+
+  return (
+    <ContentLayout
+      title="Contact"
+      description="Controls the contact page hero and info card."
+      onSave={() => onSave(form)}
+      saving={saving}
+    >
+
+      <Input
+        label="Heading"
+        value={form.heading}
+        onChange={(value) => setForm({ ...form, heading: value })}
+      />
+
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">Subtext</label>
+        <textarea
+          value={form.subtext}
+          onChange={(e) => setForm({ ...form, subtext: e.target.value })}
+          rows={2}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white resize-none"
+        />
+      </div>
+
+      <DynamicListEditor
+        label="Info Rows"
+        addLabel="Add Row"
+        items={form.info_rows}
+        onChange={(info_rows) => setForm({ ...form, info_rows })}
+        emptyItem={{ icon: "location", title: "New Row", lines: [""] }}
+        fields={[
+          { key: "icon", label: "Icon", type: "select", options: CONTACT_ICONS },
+          { key: "title", label: "Title", type: "text" },
+          { key: "lines", label: "Lines (one per row)", type: "lines", fullWidth: true },
+        ]}
+      />
+
+    </ContentLayout>
   );
 };
 
@@ -2118,12 +1878,7 @@ const ReservationsPage = ({
    USER MODAL
 ===================================================== */
 
-const UserModal = ({
-  item,
-  close,
-  reload,
-  authFetch,
-}) => {
+const UserModal = ({ item, close, reload, authFetch }) => {
 
   const [form, setForm] = useState({
     name: item?.name || "",
@@ -2133,21 +1888,16 @@ const UserModal = ({
     role: item?.role || "user",
   });
 
-  const [saving, setSaving] =
-    useState(false);
+  const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
-
     e.preventDefault();
-
     setSaving(true);
 
     try {
-
       let response;
 
       if (item) {
-
         const body = {
           name: form.name,
           username: form.username,
@@ -2158,150 +1908,68 @@ const UserModal = ({
           body.password = form.password;
         }
 
-        response = await authFetch(
-          `/admin/users/${encodeURIComponent(
-            item.email
-          )}`,
-          {
-            method: "PUT",
-            body: JSON.stringify(body),
-          }
-        );
-
+        response = await authFetch(`/admin/users/${encodeURIComponent(item.email)}`, {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
       } else {
-
-        response = await authFetch(
-          "/admin/users",
-          {
-            method: "POST",
-            body: JSON.stringify(form),
-          }
-        );
-
+        response = await authFetch("/admin/users", {
+          method: "POST",
+          body: JSON.stringify(form),
+        });
       }
 
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        alert(
-          result.detail ||
-            "Something went wrong"
-        );
+        alert(result.detail || "Something went wrong");
         return;
       }
 
       close();
       await reload();
-
     } catch (error) {
-
       console.error(error);
       alert("Something went wrong");
-
     } finally {
-
       setSaving(false);
-
     }
   };
 
   return (
-    <Modal
-      title={
-        item
-          ? "Edit User"
-          : "Add User"
-      }
-      close={close}
-    >
+    <Modal title={item ? "Edit User" : "Add User"} close={close}>
+      <form onSubmit={submit} className="space-y-4">
 
-      <form
-        onSubmit={submit}
-        className="space-y-4"
-      >
-
-        <Input
-          label="Name"
-          value={form.name}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              name: value,
-            })
-          }
-        />
-
-        <Input
-          label="Username"
-          value={form.username}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              username: value,
-            })
-          }
-        />
+        <Input label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
+        <Input label="Username" value={form.username} onChange={(value) => setForm({ ...form, username: value })} />
 
         {!item && (
           <Input
             label="Email"
             type="email"
             value={form.email}
-            onChange={(value) =>
-              setForm({
-                ...form,
-                email: value,
-              })
-            }
+            onChange={(value) => setForm({ ...form, email: value })}
           />
         )}
 
         <Input
-          label={
-            item
-              ? "New Password"
-              : "Password"
-          }
+          label={item ? "New Password" : "Password"}
           type="password"
           value={form.password}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              password: value,
-            })
-          }
+          onChange={(value) => setForm({ ...form, password: value })}
           required={!item}
         />
 
         <Select
           label="Role"
           value={form.role}
-          options={[
-            "user",
-            "admin",
-          ]}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              role: value,
-            })
-          }
+          options={["user", "admin"]}
+          onChange={(value) => setForm({ ...form, role: value })}
         />
 
-        <SubmitButton
-          text={
-            saving
-              ? "Saving..."
-              : item
-              ? "Update User"
-              : "Add User"
-          }
-          disabled={saving}
-        />
+        <SubmitButton text={saving ? "Saving..." : item ? "Update User" : "Add User"} disabled={saving} />
 
       </form>
-
     </Modal>
   );
 };
@@ -2311,11 +1979,6 @@ const UserModal = ({
    FOOD MODAL
 ===================================================== */
 
-// Fixed category list — dropdown se select hoti
-// hai taaki typo ki wajah se same category do
-// alag naamon se save na ho (jaise "Junk Food"
-// aur "junk food" alag-alag ban jaana).
-// Naya category chahiye ho to bas yahan add karo.
 const FOOD_CATEGORIES = [
   "Junk Food",
   "Starters",
@@ -2326,201 +1989,104 @@ const FOOD_CATEGORIES = [
   "Combos",
 ];
 
-const FoodModal = ({
-  item,
-  close,
-  reload,
-  authFetch,
-}) => {
+const FoodModal = ({ item, close, reload, authFetch }) => {
 
   const [form, setForm] = useState({
     name: item?.name || "",
-    description:
-      item?.description || "",
+    description: item?.description || "",
     price: item?.price || "",
-    category:
-      item?.category || FOOD_CATEGORIES[0],
+    category: item?.category || FOOD_CATEGORIES[0],
     image: item?.image || "",
-    available:
-      item?.available ?? true,
+    available: item?.available ?? true,
   });
 
-  // Agar edit ho rahe kisi purane food item ki
-  // category fixed list mein nahi hai (jaise
-  // pehle se DB mein koi alag spelling save thi),
-  // to usko bhi option mein dikhao taaki dropdown
-  // chupke se usko badal na de.
   const categoryOptions =
-    form.category &&
-    !FOOD_CATEGORIES.includes(form.category)
+    form.category && !FOOD_CATEGORIES.includes(form.category)
       ? [form.category, ...FOOD_CATEGORIES]
       : FOOD_CATEGORIES;
 
-  const [saving, setSaving] =
-    useState(false);
+  const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
-
     e.preventDefault();
-
     setSaving(true);
 
     try {
+      const url = item ? `/admin/food/${item.id}` : "/admin/food";
 
-      const url = item
-        ? `/admin/food/${item.id}`
-        : "/admin/food";
+      const response = await authFetch(url, {
+        method: item ? "PUT" : "POST",
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description,
+          price: Number(form.price),
+          category: form.category,
+          image: form.image,
+          available: form.available,
+        }),
+      });
 
-      const response =
-        await authFetch(url, {
-          method: item
-            ? "PUT"
-            : "POST",
-          body: JSON.stringify({
-            name: form.name,
-            description:
-              form.description,
-            price: Number(
-              form.price
-            ),
-            category:
-              form.category,
-            image: form.image,
-            available:
-              form.available,
-          }),
-        });
-
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        alert(
-          result.detail ||
-            "Food operation failed"
-        );
+        alert(result.detail || "Food operation failed");
         return;
       }
 
       close();
       await reload();
-
     } catch (error) {
-
       console.error(error);
       alert("Something went wrong");
-
     } finally {
-
       setSaving(false);
-
     }
   };
 
   return (
-    <Modal
-      title={
-        item
-          ? "Edit Food"
-          : "Add Food"
-      }
-      close={close}
-    >
+    <Modal title={item ? "Edit Food" : "Add Food"} close={close}>
+      <form onSubmit={submit} className="space-y-4">
 
-      <form
-        onSubmit={submit}
-        className="space-y-4"
-      >
-
-        <Input
-          label="Food Name"
-          value={form.name}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              name: value,
-            })
-          }
-        />
-
+        <Input label="Food Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
         <Input
           label="Description"
           value={form.description}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              description: value,
-            })
-          }
+          onChange={(value) => setForm({ ...form, description: value })}
         />
-
         <Input
           label="Price"
           type="number"
           value={form.price}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              price: value,
-            })
-          }
+          onChange={(value) => setForm({ ...form, price: value })}
         />
 
         <Select
           label="Category"
           value={form.category}
           options={categoryOptions}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              category: value,
-            })
-          }
+          onChange={(value) => setForm({ ...form, category: value })}
         />
 
-        <Input
-          label="Image URL"
+        <ImageUploadField
+          label="Food Image"
           value={form.image}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              image: value,
-            })
-          }
+          onChange={(url) => setForm({ ...form, image: url })}
+          authFetch={authFetch}
         />
 
         <label className="flex items-center gap-3 text-sm text-gray-300">
-
           <input
             type="checkbox"
             checked={form.available}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                available:
-                  e.target.checked,
-              })
-            }
+            onChange={(e) => setForm({ ...form, available: e.target.checked })}
             className="w-4 h-4 accent-red-600"
           />
-
           Available
-
         </label>
 
-        <SubmitButton
-          text={
-            saving
-              ? "Saving..."
-              : item
-              ? "Update Food"
-              : "Add Food"
-          }
-          disabled={saving}
-        />
+        <SubmitButton text={saving ? "Saving..." : item ? "Update Food" : "Add Food"} disabled={saving} />
 
       </form>
-
     </Modal>
   );
 };
@@ -2530,205 +2096,101 @@ const FoodModal = ({
    ROOM MODAL
 ===================================================== */
 
-const RoomModal = ({
-  item,
-  close,
-  reload,
-  authFetch,
-}) => {
+const RoomModal = ({ item, close, reload, authFetch }) => {
 
   const [form, setForm] = useState({
     name: item?.name || "",
-    description:
-      item?.description || "",
+    description: item?.description || "",
     price: item?.price || "",
     image: item?.image || "",
-    facilities:
-      Array.isArray(
-        item?.facilities
-      )
-        ? item.facilities.join(", ")
-        : "",
-    available:
-      item?.available ?? true,
+    facilities: Array.isArray(item?.facilities) ? item.facilities.join(", ") : "",
+    available: item?.available ?? true,
   });
 
-  const [saving, setSaving] =
-    useState(false);
+  const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
-
     e.preventDefault();
-
     setSaving(true);
 
     try {
-
       const body = {
         name: form.name,
-        description:
-          form.description,
-        price: Number(
-          form.price
-        ),
+        description: form.description,
+        price: Number(form.price),
         image: form.image,
-        facilities:
-          form.facilities
-            .split(",")
-            .map((item) =>
-              item.trim()
-            )
-            .filter(Boolean),
-        available:
-          form.available,
+        facilities: form.facilities.split(",").map((item) => item.trim()).filter(Boolean),
+        available: form.available,
       };
 
-      const url = item
-        ? `/admin/rooms/${item.id}`
-        : "/admin/rooms";
+      const url = item ? `/admin/rooms/${item.id}` : "/admin/rooms";
 
-      const response =
-        await authFetch(url, {
-          method: item
-            ? "PUT"
-            : "POST",
-          body: JSON.stringify(
-            body
-          ),
-        });
+      const response = await authFetch(url, {
+        method: item ? "PUT" : "POST",
+        body: JSON.stringify(body),
+      });
 
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        alert(
-          result.detail ||
-            "Room operation failed"
-        );
+        alert(result.detail || "Room operation failed");
         return;
       }
 
       close();
       await reload();
-
     } catch (error) {
-
       console.error(error);
       alert("Something went wrong");
-
     } finally {
-
       setSaving(false);
-
     }
   };
 
   return (
-    <Modal
-      title={
-        item
-          ? "Edit Room"
-          : "Add Room"
-      }
-      close={close}
-    >
+    <Modal title={item ? "Edit Room" : "Add Room"} close={close}>
+      <form onSubmit={submit} className="space-y-4">
 
-      <form
-        onSubmit={submit}
-        className="space-y-4"
-      >
-
-        <Input
-          label="Room Name"
-          value={form.name}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              name: value,
-            })
-          }
-        />
-
+        <Input label="Room Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
         <Input
           label="Description"
           value={form.description}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              description: value,
-            })
-          }
+          onChange={(value) => setForm({ ...form, description: value })}
         />
-
         <Input
           label="Price"
           type="number"
           value={form.price}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              price: value,
-            })
-          }
+          onChange={(value) => setForm({ ...form, price: value })}
         />
 
-        <Input
-          label="Image URL"
+        <ImageUploadField
+          label="Room Image"
           value={form.image}
-          onChange={(value) =>
-            setForm({
-              ...form,
-              image: value,
-            })
-          }
+          onChange={(url) => setForm({ ...form, image: url })}
+          authFetch={authFetch}
         />
 
         <Input
           label="Facilities"
           placeholder="AC, WiFi, TV, Parking"
-          value={
-            form.facilities
-          }
-          onChange={(value) =>
-            setForm({
-              ...form,
-              facilities: value,
-            })
-          }
+          value={form.facilities}
+          onChange={(value) => setForm({ ...form, facilities: value })}
         />
 
         <label className="flex items-center gap-3 text-sm text-gray-300">
-
           <input
             type="checkbox"
             checked={form.available}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                available:
-                  e.target.checked,
-              })
-            }
+            onChange={(e) => setForm({ ...form, available: e.target.checked })}
             className="w-4 h-4 accent-red-600"
           />
-
           Available
-
         </label>
 
-        <SubmitButton
-          text={
-            saving
-              ? "Saving..."
-              : item
-              ? "Update Room"
-              : "Add Room"
-          }
-          disabled={saving}
-        />
+        <SubmitButton text={saving ? "Saving..." : item ? "Update Room" : "Add Room"} disabled={saving} />
 
       </form>
-
     </Modal>
   );
 };
@@ -2738,29 +2200,15 @@ const RoomModal = ({
    COMMON COMPONENTS
 ===================================================== */
 
-const ManagementLayout = ({
-  title,
-  description,
-  button,
-  onAdd,
-  children,
-}) => {
-
+const ManagementLayout = ({ title, description, button, onAdd, children }) => {
   return (
     <div className="space-y-6">
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
         <div>
-
-          <h1 className="text-2xl font-bold">
-            {title}
-          </h1>
-
-          <p className="text-sm text-gray-500 mt-1">
-            {description}
-          </p>
-
+          <h1 className="text-2xl font-bold">{title}</h1>
+          <p className="text-sm text-gray-500 mt-1">{description}</p>
         </div>
 
         {button && (
@@ -2769,7 +2217,6 @@ const ManagementLayout = ({
             className="flex items-center justify-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-medium transition"
           >
             <Plus size={18} />
-
             {button}
           </button>
         )}
@@ -2777,11 +2224,7 @@ const ManagementLayout = ({
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-
-        <div className="overflow-x-auto">
-          {children}
-        </div>
-
+        <div className="overflow-x-auto">{children}</div>
       </div>
 
     </div>
@@ -2789,69 +2232,38 @@ const ManagementLayout = ({
 };
 
 
-const Table = ({
-  headers,
-  children,
-}) => {
-
+const Table = ({ headers, children }) => {
   return (
     <table className="w-full text-sm">
-
       <thead className="bg-gray-800/60">
-
         <tr>
-
-          {headers.map(
-            (header) => (
-              <th
-                key={header}
-                className="px-5 py-4 text-left text-gray-400 font-medium whitespace-nowrap"
-              >
-                {header}
-              </th>
-            )
-          )}
-
+          {headers.map((header) => (
+            <th key={header} className="px-5 py-4 text-left text-gray-400 font-medium whitespace-nowrap">
+              {header}
+            </th>
+          ))}
         </tr>
-
       </thead>
-
-      <tbody>
-        {children}
-      </tbody>
-
+      <tbody>{children}</tbody>
     </table>
   );
 };
 
 
-const EmptyRow = ({
-  colSpan,
-}) => {
-
+const EmptyRow = ({ colSpan }) => {
   return (
     <tr>
-
-      <td
-        colSpan={colSpan}
-        className="px-5 py-12 text-center text-gray-500"
-      >
+      <td colSpan={colSpan} className="px-5 py-12 text-center text-gray-500">
         No data found.
       </td>
-
     </tr>
   );
 };
 
 
-const ActionButtons = ({
-  onEdit,
-  onDelete,
-}) => {
-
+const ActionButtons = ({ onEdit, onDelete }) => {
   return (
     <div className="flex items-center gap-2">
-
       <button
         onClick={onEdit}
         className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
@@ -2867,43 +2279,20 @@ const ActionButtons = ({
       >
         <Trash2 size={16} />
       </button>
-
     </div>
   );
 };
 
 
-const StatusBadge = ({
-  status,
-}) => {
-
-  const positiveStatuses = [
-    "admin",
-    "Available",
-    "available",
-    "completed",
-    "confirmed",
-  ];
-
-  const positive =
-    positiveStatuses.includes(
-      status
-    );
+const StatusBadge = ({ status }) => {
+  const positiveStatuses = ["admin", "Available", "available", "completed", "confirmed"];
+  const positive = positiveStatuses.includes(status);
 
   return (
     <span
       className={`
-        inline-flex
-        px-2.5
-        py-1
-        rounded-lg
-        text-xs
-        font-medium
-        ${
-          positive
-            ? "bg-green-500/10 text-green-400"
-            : "bg-yellow-500/10 text-yellow-400"
-        }
+        inline-flex px-2.5 py-1 rounded-lg text-xs font-medium
+        ${positive ? "bg-green-500/10 text-green-400" : "bg-yellow-500/10 text-yellow-400"}
       `}
     >
       {status}
@@ -2912,111 +2301,57 @@ const StatusBadge = ({
 };
 
 
-const QuickButton = ({
-  icon: Icon,
-  title,
-  onClick,
-}) => {
-
+const QuickButton = ({ icon: Icon, title, onClick }) => {
   return (
     <button
       onClick={onClick}
       className="flex items-center gap-3 p-4 bg-gray-800/60 hover:bg-gray-800 rounded-xl border border-gray-800 hover:border-red-500/30 text-left transition"
     >
-
-      <Icon
-        size={20}
-        className="text-red-400"
-      />
-
+      <Icon size={20} className="text-red-400" />
       <span>{title}</span>
-
     </button>
   );
 };
 
 
-const Input = ({
-  label,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  required = true,
-}) => {
-
+const Input = ({ label, type = "text", value, onChange, placeholder, required = true }) => {
   return (
     <div>
-
-      <label className="block text-sm text-gray-400 mb-2">
-        {label}
-      </label>
-
+      <label className="block text-sm text-gray-400 mb-2">{label}</label>
       <input
         type={type}
         value={value}
         placeholder={placeholder}
         required={required}
-        onChange={(e) =>
-          onChange(
-            e.target.value
-          )
-        }
+        onChange={(e) => onChange(e.target.value)}
         className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white placeholder:text-gray-600"
       />
-
     </div>
   );
 };
 
 
-const Select = ({
-  label,
-  value,
-  options,
-  onChange,
-}) => {
-
+const Select = ({ label, value, options, onChange }) => {
   return (
     <div>
-
-      <label className="block text-sm text-gray-400 mb-2">
-        {label}
-      </label>
-
+      <label className="block text-sm text-gray-400 mb-2">{label}</label>
       <select
         value={value}
-        onChange={(e) =>
-          onChange(
-            e.target.value
-          )
-        }
+        onChange={(e) => onChange(e.target.value)}
         className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none text-white"
       >
-
-        {options.map(
-          (option) => (
-            <option
-              key={option}
-              value={option}
-            >
-              {option}
-            </option>
-          )
-        )}
-
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
       </select>
-
     </div>
   );
 };
 
 
-const SubmitButton = ({
-  text,
-  disabled = false,
-}) => {
-
+const SubmitButton = ({ text, disabled = false }) => {
   return (
     <button
       type="submit"
@@ -3029,38 +2364,24 @@ const SubmitButton = ({
 };
 
 
-const Modal = ({
-  title,
-  close,
-  children,
-}) => {
-
+const Modal = ({ title, close, children }) => {
   return (
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-
       <div className="w-full max-w-lg bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
 
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-800">
-
-          <h2 className="text-xl font-bold">
-            {title}
-          </h2>
-
+          <h2 className="text-xl font-bold">{title}</h2>
           <button
             onClick={close}
             className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition"
           >
             <X size={20} />
           </button>
-
         </div>
 
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6">{children}</div>
 
       </div>
-
     </div>
   );
 };
