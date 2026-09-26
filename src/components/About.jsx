@@ -239,7 +239,7 @@ const About = () => {
         <section
             id='about'
             ref={sectionRef}
-            className='relative bg-[#17110D] text-[#F4EFE6] font-[Inter,system-ui,sans-serif] py-24 overflow-hidden'
+            className='relative bg-[#17110D] text-[#F4EFE6] font-[Inter,system-ui,sans-serif] py-6 overflow-hidden'
         >
             <div ref={particlesRef} className='absolute inset-0 overflow-hidden pointer-events-none' />
 
