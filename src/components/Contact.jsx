@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { FaLocationArrow, FaPhoneAlt } from "react-icons/fa";
 import { MdEmail, MdTimer } from "react-icons/md";
 import { sendContactEmail } from "../services/EmailService";
+import ContentBlocks from "../components/Contentblocks";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -44,6 +45,7 @@ const DEFAULT_CONTACT = {
       ],
     },
   ],
+  content_blocks: [],
 };
 
 const Contact = () => {
@@ -73,7 +75,7 @@ const Contact = () => {
 
   // ==============================
   // GET CONTACT CONTENT FROM BACKEND
-  // (admin-edited heading/subtext/info rows)
+  // (admin-edited heading/subtext/info rows/content_blocks)
   // ==============================
   useEffect(() => {
     const fetchContent = async () => {
@@ -83,7 +85,7 @@ const Contact = () => {
 
         const result = await response.json();
         if (result.contact) {
-          setContact(result.contact);
+          setContact({ content_blocks: [], ...result.contact });
         }
       } catch (err) {
         console.error("Site content fetch error:", err);
@@ -430,6 +432,12 @@ const Contact = () => {
               })}
             </div>
 
+            {/* extra admin-added blocks */}
+            <ContentBlocks
+              blocks={contact.content_blocks}
+              className="mt-8 pt-6 border-t border-dashed border-white/10"
+            />
+
           </div>
 
 
@@ -541,5 +549,3 @@ const Contact = () => {
 };
 
 export default Contact;
-
-

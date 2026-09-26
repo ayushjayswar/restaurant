@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { FaFacebook, FaInstagram, FaTwitter, FaWhatsapp } from 'react-icons/fa'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import ContentBlocks from '../components/Contentblocks'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -34,6 +35,7 @@ const DEFAULT_FOOTER = {
         { label: "Reservation", url: "/reservation" },
         { label: "Contact", url: "/contact" },
     ],
+    content_blocks: [],
 };
 
 const Footer = () => {
@@ -51,7 +53,7 @@ const Footer = () => {
 
     // ==============================
     // GET FOOTER CONTENT FROM BACKEND
-    // (admin-edited tagline, address, email, socials, links)
+    // (admin-edited tagline, address, email, socials, links, content_blocks)
     // ==============================
     useEffect(() => {
         const fetchContent = async () => {
@@ -61,7 +63,7 @@ const Footer = () => {
 
                 const result = await response.json();
                 if (result.footer) {
-                    setFooter(result.footer);
+                    setFooter({ content_blocks: [], ...result.footer });
                 }
             } catch (err) {
                 console.error("Site content fetch error:", err);
@@ -228,13 +230,17 @@ const Footer = () => {
 
                 </div>
 
+                {/* extra admin-added blocks */}
+                <ContentBlocks
+                    blocks={footer.content_blocks}
+                    className='mt-4 mb-6 border-t border-white/10 pt-6 text-white'
+                />
 
             </div>
+
             <p ref={copyRef} className='text-center text-white '>© 2025 Fork&Flame. All rights reserved.</p>
         </div>
     )
 }
 
 export default Footer;
-
-

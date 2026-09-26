@@ -1146,6 +1146,7 @@ const AdminPanel = () => {
               content={siteContent.footer}
               onSave={(data) => saveSiteSection("footer", data)}
               saving={contentSaving}
+              authFetch={authFetch}
             />
           )}
 
@@ -1154,6 +1155,7 @@ const AdminPanel = () => {
               content={siteContent.contact}
               onSave={(data) => saveSiteSection("contact", data)}
               saving={contentSaving}
+              authFetch={authFetch}
             />
           )}
 
@@ -1594,6 +1596,33 @@ const ReservationsPage = ({ data, onDelete, onStatusChange }) => {
 };
 
 
+const Input = ({
+  label,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  required = true,
+}) => {
+  return (
+    <div>
+      <label className="block text-sm text-gray-400 mb-2">
+        {label}
+      </label>
+
+      <input
+        type={type}
+        value={value ?? ""}
+        placeholder={placeholder}
+        required={required}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white placeholder:text-gray-600"
+      />
+    </div>
+  );
+};
+
+
 /* =====================================================
    SITE CONTENT — shared layout with a Save button
 ===================================================== */
@@ -1634,7 +1663,7 @@ const ContentLayout = ({ title, description, onSave, saving, children }) => {
 ===================================================== */
 
 const HomeContentPage = ({ content, onSave, saving, authFetch }) => {
-  const [form, setForm] = useState(content);
+  const [form, setForm] = useState({ content_blocks: [], ...content });
 
   return (
     <ContentLayout
@@ -1679,6 +1708,13 @@ const HomeContentPage = ({ content, onSave, saving, authFetch }) => {
         ]}
       />
 
+      <ContentBlockEditor
+        label="Extra Content Blocks"
+        items={form.content_blocks}
+        onChange={(content_blocks) => setForm({ ...form, content_blocks })}
+        authFetch={authFetch}
+      />
+
     </ContentLayout>
   );
 };
@@ -1691,7 +1727,7 @@ const HomeContentPage = ({ content, onSave, saving, authFetch }) => {
 const ABOUT_BADGE_ICONS = ["utensils", "wine"];
 
 const AboutContentPage = ({ content, onSave, saving, authFetch }) => {
-  const [form, setForm] = useState(content);
+  const [form, setForm] = useState({ content_blocks: [], ...content });
 
   // paragraphs are plain strings — wrap as {text} rows just for the editor
   const paragraphItems = (form.paragraphs || []).map((text) => ({ text }));
@@ -1750,6 +1786,13 @@ const AboutContentPage = ({ content, onSave, saving, authFetch }) => {
         ]}
       />
 
+      <ContentBlockEditor
+        label="Extra Content Blocks"
+        items={form.content_blocks}
+        onChange={(content_blocks) => setForm({ ...form, content_blocks })}
+        authFetch={authFetch}
+      />
+
     </ContentLayout>
   );
 };
@@ -1761,8 +1804,8 @@ const AboutContentPage = ({ content, onSave, saving, authFetch }) => {
 
 const FOOTER_SOCIAL_PLATFORMS = ["facebook", "twitter", "instagram", "whatsapp"];
 
-const FooterContentPage = ({ content, onSave, saving }) => {
-  const [form, setForm] = useState(content);
+const FooterContentPage = ({ content, onSave, saving, authFetch }) => {
+  const [form, setForm] = useState({ content_blocks: [], ...content });
 
   return (
     <ContentLayout
@@ -1818,6 +1861,13 @@ const FooterContentPage = ({ content, onSave, saving }) => {
         ]}
       />
 
+      <ContentBlockEditor
+        label="Extra Content Blocks"
+        items={form.content_blocks}
+        onChange={(content_blocks) => setForm({ ...form, content_blocks })}
+        authFetch={authFetch}
+      />
+
     </ContentLayout>
   );
 };
@@ -1829,8 +1879,8 @@ const FooterContentPage = ({ content, onSave, saving }) => {
 
 const CONTACT_ICONS = ["location", "phone", "email", "time"];
 
-const ContactContentPage = ({ content, onSave, saving }) => {
-  const [form, setForm] = useState(content);
+const ContactContentPage = ({ content, onSave, saving, authFetch }) => {
+  const [form, setForm] = useState({ content_blocks: [], ...content });
 
   return (
     <ContentLayout
@@ -1867,6 +1917,13 @@ const ContactContentPage = ({ content, onSave, saving }) => {
           { key: "title", label: "Title", type: "text" },
           { key: "lines", label: "Lines (one per row)", type: "lines", fullWidth: true },
         ]}
+      />
+
+      <ContentBlockEditor
+        label="Extra Content Blocks"
+        items={form.content_blocks}
+        onChange={(content_blocks) => setForm({ ...form, content_blocks })}
+        authFetch={authFetch}
       />
 
     </ContentLayout>
@@ -2314,82 +2371,651 @@ const QuickButton = ({ icon: Icon, title, onClick }) => {
 };
 
 
-const Input = ({ label, type = "text", value, onChange, placeholder, required = true }) => {
-  return (
-    <div>
-      <label className="block text-sm text-gray-400 mb-2">{label}</label>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        required={required}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white placeholder:text-gray-600"
-      />
-    </div>
-  );
-};
+/* =====================================================
+   CONTENT BLOCK EDITOR
+   Lets the client freely add/remove/reorder extra
+   heading / paragraph / image blocks inside a section,
+   without a developer having to add new fixed fields.
+===================================================== */
 
+const BLOCK_TYPES = [
+  { value: "heading", label: "Heading" },
+  { value: "paragraph", label: "Paragraph" },
+  { value: "image", label: "Image" },
+  { value: "image-text", label: "Image + Text" },
+];
 
-const Select = ({ label, value, options, onChange }) => {
-  return (
+const CMS_SELECT_CLASS =
+  "w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg outline-none focus:border-red-500 text-white text-sm";
+
+const CMS_INPUT_CLASS =
+  "w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg outline-none focus:border-red-500 text-white text-sm";
+
+const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
+  const blocks = items || [];
+
+  const addBlock = (type) => {
+    const newBlock =
+      type === "image"
+        ? {
+            type: "image",
+            url: "",
+            imagePosition: "center",
+            imageSize: "large",
+            imageFit: "cover",
+            animation: "fade",
+            textPosition: "none",
+            heading: "",
+            text: "",
+            textAlign: "center",
+            font: "Poppins",
+            fontSize: "large",
+            headingAnimation: "fade",
+            descriptionAnimation: "fade",
+          }
+        : type === "image-text"
+        ? {
+            type: "image-text",
+            image: "",
+            heading: "",
+            text: "",
+            imagePosition: "left",
+            imageSize: "medium",
+            imageFit: "cover",
+            textPosition: "right",
+            textAlign: "left",
+            font: "Poppins",
+            headingSize: "large",
+            animation: "fade",
+            headingAnimation: "fade",
+            descriptionAnimation: "fade",
+          }
+        : type === "heading"
+        ? {
+            type: "heading",
+            text: "",
+            textAlign: "center",
+            font: "Poppins",
+            fontSize: "large",
+            animation: "fade",
+          }
+        : {
+            type: "paragraph",
+            text: "",
+            textAlign: "center",
+            font: "Poppins",
+            fontSize: "medium",
+            animation: "fade",
+          };
+
+    onChange([...blocks, newBlock]);
+  };
+
+  const updateBlock = (index, data) => {
+    const updated = [...blocks];
+    updated[index] = { ...updated[index], ...data };
+    onChange(updated);
+  };
+
+  const removeBlock = (index) => {
+    onChange(blocks.filter((_, i) => i !== index));
+  };
+
+  const moveBlock = (index, direction) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= blocks.length) return;
+
+    const updated = [...blocks];
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    onChange(updated);
+  };
+
+  const SelectField = ({ label: fieldLabel, value, onChange: handleChange, children }) => (
     <div>
-      <label className="block text-sm text-gray-400 mb-2">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none text-white"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
+      <label className="block text-xs text-gray-400 mb-2">{fieldLabel}</label>
+      <select value={value} onChange={handleChange} className={CMS_SELECT_CLASS}>
+        {children}
       </select>
     </div>
   );
-};
 
-
-const SubmitButton = ({ text, disabled = false }) => {
   return (
-    <button
-      type="submit"
-      disabled={disabled}
-      className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition"
-    >
-      {text}
-    </button>
-  );
-};
-
-
-const Modal = ({ title, close, children }) => {
-  return (
-    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-800">
-          <h2 className="text-xl font-bold">{title}</h2>
-          <button
-            onClick={close}
-            className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition"
-          >
-            <X size={20} />
-          </button>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <label className="block text-sm text-gray-400">{label}</label>
+        <div className="flex flex-wrap gap-2">
+          {BLOCK_TYPES.map((bt) => (
+            <button
+              key={bt.value}
+              type="button"
+              onClick={() => addBlock(bt.value)}
+              className="text-xs px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg hover:border-red-500 hover:text-white text-gray-300 transition"
+            >
+              + {bt.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <div className="p-6">{children}</div>
+      {blocks.length === 0 && (
+        <div className="border border-dashed border-gray-700 rounded-xl p-7 text-center">
+          <p className="text-sm text-gray-500">No content blocks yet.</p>
+          <p className="text-xs text-gray-600 mt-1">
+            Add a heading, paragraph, image or Image + Text block.
+          </p>
+        </div>
+      )}
 
+      <div className="space-y-4">
+        {blocks.map((block, index) => (
+          <div
+            key={index}
+            className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xs uppercase tracking-wide text-red-400 font-semibold">
+                  {block.type}
+                </span>
+                <span className="text-xs text-gray-600">Block {index + 1}</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => moveBlock(index, -1)}
+                  disabled={index === 0}
+                  className="p-1.5 text-gray-500 hover:text-white disabled:opacity-30"
+                  title="Move up"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveBlock(index, 1)}
+                  disabled={index === blocks.length - 1}
+                  className="p-1.5 text-gray-500 hover:text-white disabled:opacity-30"
+                  title="Move down"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeBlock(index)}
+                  className="p-1.5 text-red-400 hover:text-red-300"
+                  title="Remove block"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+
+            {block.type === "heading" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-2">Heading Text</label>
+                  <input
+                    value={block.text || ""}
+                    onChange={(e) => updateBlock(index, { text: e.target.value })}
+                    placeholder="Enter heading..."
+                    className={CMS_INPUT_CLASS}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <SelectField
+                    label="Alignment"
+                    value={block.textAlign || "center"}
+                    onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
+                  >
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </SelectField>
+
+                  <SelectField
+                    label="Font"
+                    value={block.font || "Poppins"}
+                    onChange={(e) => updateBlock(index, { font: e.target.value })}
+                  >
+                    <option value="Poppins">Poppins</option>
+                    <option value="Inter">Inter</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Montserrat">Montserrat</option>
+                    <option value="Playfair Display">Playfair Display</option>
+                    <option value="Georgia">Georgia</option>
+                  </SelectField>
+
+                  <SelectField
+                    label="Font Size"
+                    value={block.fontSize || "large"}
+                    onChange={(e) => updateBlock(index, { fontSize: e.target.value })}
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                    <option value="xlarge">Extra Large</option>
+                  </SelectField>
+                </div>
+
+                <SelectField
+                  label="Animation"
+                  value={block.animation || "fade"}
+                  onChange={(e) => updateBlock(index, { animation: e.target.value })}
+                >
+                  <option value="none">None</option>
+                  <option value="fade">Fade</option>
+                  <option value="slide-up">Slide Up</option>
+                  <option value="slide-left">Slide Left</option>
+                  <option value="slide-right">Slide Right</option>
+                  <option value="zoom">Zoom</option>
+                </SelectField>
+              </div>
+            )}
+
+            {block.type === "paragraph" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-2">Paragraph Text</label>
+                  <textarea
+                    value={block.text || ""}
+                    onChange={(e) => updateBlock(index, { text: e.target.value })}
+                    placeholder="Enter paragraph..."
+                    rows={4}
+                    className={`${CMS_INPUT_CLASS} resize-none`}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <SelectField
+                    label="Alignment"
+                    value={block.textAlign || "center"}
+                    onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
+                  >
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </SelectField>
+
+                  <SelectField
+                    label="Font"
+                    value={block.font || "Poppins"}
+                    onChange={(e) => updateBlock(index, { font: e.target.value })}
+                  >
+                    <option value="Poppins">Poppins</option>
+                    <option value="Inter">Inter</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Montserrat">Montserrat</option>
+                    <option value="Playfair Display">Playfair Display</option>
+                    <option value="Georgia">Georgia</option>
+                  </SelectField>
+
+                  <SelectField
+                    label="Font Size"
+                    value={block.fontSize || "medium"}
+                    onChange={(e) => updateBlock(index, { fontSize: e.target.value })}
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </SelectField>
+                </div>
+
+                <SelectField
+                  label="Animation"
+                  value={block.animation || "fade"}
+                  onChange={(e) => updateBlock(index, { animation: e.target.value })}
+                >
+                  <option value="none">None</option>
+                  <option value="fade">Fade</option>
+                  <option value="slide-up">Slide Up</option>
+                  <option value="slide-left">Slide Left</option>
+                  <option value="slide-right">Slide Right</option>
+                  <option value="zoom">Zoom</option>
+                </SelectField>
+              </div>
+            )}
+
+            {block.type === "image" && (
+              <div className="space-y-5">
+                <ImageUploadField
+                  label="Image"
+                  value={block.url || ""}
+                  onChange={(url) => updateBlock(index, { url })}
+                  authFetch={authFetch}
+                />
+
+                <div className="border-t border-gray-700 pt-4">
+                  <h4 className="text-sm font-semibold text-white mb-3">Image Layout</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <SelectField
+                      label="Image Position"
+                      value={block.imagePosition || "center"}
+                      onChange={(e) => updateBlock(index, { imagePosition: e.target.value })}
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                      <option value="full">Full Width</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Image Size"
+                      value={block.imageSize || "large"}
+                      onChange={(e) => updateBlock(index, { imageSize: e.target.value })}
+                    >
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                      <option value="full">Full Screen</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Image Fit"
+                      value={block.imageFit || "cover"}
+                      onChange={(e) => updateBlock(index, { imageFit: e.target.value })}
+                    >
+                      <option value="cover">Cover</option>
+                      <option value="contain">Contain</option>
+                      <option value="fill">Fill</option>
+                    </SelectField>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-700 pt-4">
+                  <h4 className="text-sm font-semibold text-white mb-3">Text On / Around Image</h4>
+
+                  <SelectField
+                    label="Text Position"
+                    value={block.textPosition || "none"}
+                    onChange={(e) => updateBlock(index, { textPosition: e.target.value })}
+                  >
+                    <option value="none">No Text</option>
+                    <option value="overlay">On Image (Overlay)</option>
+                    <option value="above">Above Image</option>
+                    <option value="below">Below Image</option>
+                  </SelectField>
+
+                  {block.textPosition && block.textPosition !== "none" && (
+                    <div className="space-y-4 mt-4">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-2">Heading</label>
+                        <input
+                          value={block.heading || ""}
+                          onChange={(e) => updateBlock(index, { heading: e.target.value })}
+                          placeholder="Enter heading..."
+                          className={CMS_INPUT_CLASS}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-2">Description</label>
+                        <textarea
+                          value={block.text || ""}
+                          onChange={(e) => updateBlock(index, { text: e.target.value })}
+                          placeholder="Enter text..."
+                          rows={3}
+                          className={`${CMS_INPUT_CLASS} resize-none`}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <SelectField
+                          label="Text Alignment"
+                          value={block.textAlign || "center"}
+                          onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Left</option>
+                          <option value="center">Center</option>
+                          <option value="right">Right</option>
+                        </SelectField>
+
+                        <SelectField
+                          label="Font"
+                          value={block.font || "Poppins"}
+                          onChange={(e) => updateBlock(index, { font: e.target.value })}
+                        >
+                          <option value="Poppins">Poppins</option>
+                          <option value="Inter">Inter</option>
+                          <option value="Roboto">Roboto</option>
+                          <option value="Montserrat">Montserrat</option>
+                          <option value="Playfair Display">Playfair Display</option>
+                          <option value="Georgia">Georgia</option>
+                        </SelectField>
+
+                        <SelectField
+                          label="Font Size"
+                          value={block.fontSize || "large"}
+                          onChange={(e) => updateBlock(index, { fontSize: e.target.value })}
+                        >
+                          <option value="small">Small</option>
+                          <option value="medium">Medium</option>
+                          <option value="large">Large</option>
+                          <option value="xlarge">Extra Large</option>
+                        </SelectField>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <SelectField
+                          label="Heading Animation"
+                          value={block.headingAnimation || block.textAnimation || "fade"}
+                          onChange={(e) => updateBlock(index, { headingAnimation: e.target.value })}
+                        >
+                          <option value="none">None</option>
+                          <option value="fade">Fade</option>
+                          <option value="slide-up">Slide Up</option>
+                          <option value="slide-left">Slide Left</option>
+                          <option value="slide-right">Slide Right</option>
+                          <option value="zoom">Zoom</option>
+                        </SelectField>
+
+                        <SelectField
+                          label="Description Animation"
+                          value={block.descriptionAnimation || block.textAnimation || "fade"}
+                          onChange={(e) => updateBlock(index, { descriptionAnimation: e.target.value })}
+                        >
+                          <option value="none">None</option>
+                          <option value="fade">Fade</option>
+                          <option value="slide-up">Slide Up</option>
+                          <option value="slide-left">Slide Left</option>
+                          <option value="slide-right">Slide Right</option>
+                          <option value="zoom">Zoom</option>
+                        </SelectField>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <SelectField
+                    label="Image Animation"
+                    value={block.animation || "fade"}
+                    onChange={(e) => updateBlock(index, { animation: e.target.value })}
+                  >
+                    <option value="none">None</option>
+                    <option value="fade">Fade</option>
+                    <option value="slide-up">Slide Up</option>
+                    <option value="slide-left">Slide Left</option>
+                    <option value="slide-right">Slide Right</option>
+                    <option value="zoom">Zoom</option>
+                  </SelectField>
+                </div>
+              </div>
+            )}
+
+            {block.type === "image-text" && (
+              <div className="space-y-5">
+                <ImageUploadField
+                  label="Image"
+                  value={block.image || block.url || ""}
+                  onChange={(image) => updateBlock(index, { image })}
+                  authFetch={authFetch}
+                />
+
+                <div>
+                  <label className="block text-xs text-gray-400 mb-2">Heading</label>
+                  <input
+                    value={block.heading || ""}
+                    onChange={(e) => updateBlock(index, { heading: e.target.value })}
+                    placeholder="Enter heading..."
+                    className={CMS_INPUT_CLASS}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-400 mb-2">Description</label>
+                  <textarea
+                    value={block.text || ""}
+                    onChange={(e) => updateBlock(index, { text: e.target.value })}
+                    placeholder="Enter description..."
+                    rows={4}
+                    className={`${CMS_INPUT_CLASS} resize-none`}
+                  />
+                </div>
+
+                <div className="border-t border-gray-700 pt-4">
+                  <h4 className="text-sm font-semibold text-white mb-3">Layout</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <SelectField
+                      label="Image Position"
+                      value={block.imagePosition || "left"}
+                      onChange={(e) => updateBlock(index, { imagePosition: e.target.value })}
+                    >
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
+                      <option value="center">Center</option>
+                      <option value="full">Full Width</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Image Size"
+                      value={block.imageSize || "medium"}
+                      onChange={(e) => updateBlock(index, { imageSize: e.target.value })}
+                    >
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                      <option value="full">Full Screen</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Image Fit"
+                      value={block.imageFit || "cover"}
+                      onChange={(e) => updateBlock(index, { imageFit: e.target.value })}
+                    >
+                      <option value="cover">Cover</option>
+                      <option value="contain">Contain</option>
+                      <option value="fill">Fill</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Text Position"
+                      value={block.textPosition || "right"}
+                      onChange={(e) => updateBlock(index, { textPosition: e.target.value })}
+                    >
+                      <option value="above">Above Image</option>
+                      <option value="below">Below Image</option>
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
+                      <option value="overlay">Overlay</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Text Alignment"
+                      value={block.textAlign || "left"}
+                      onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                    </SelectField>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-700 pt-4">
+                  <h4 className="text-sm font-semibold text-white mb-3">Typography</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <SelectField
+                      label="Font"
+                      value={block.font || "Poppins"}
+                      onChange={(e) => updateBlock(index, { font: e.target.value })}
+                    >
+                      <option value="Poppins">Poppins</option>
+                      <option value="Inter">Inter</option>
+                      <option value="Roboto">Roboto</option>
+                      <option value="Montserrat">Montserrat</option>
+                      <option value="Playfair Display">Playfair Display</option>
+                      <option value="Georgia">Georgia</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Heading Size"
+                      value={block.headingSize || "large"}
+                      onChange={(e) => updateBlock(index, { headingSize: e.target.value })}
+                    >
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                      <option value="xlarge">Extra Large</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Image Animation"
+                      value={block.animation || "fade"}
+                      onChange={(e) => updateBlock(index, { animation: e.target.value })}
+                    >
+                      <option value="none">None</option>
+                      <option value="fade">Fade</option>
+                      <option value="slide-up">Slide Up</option>
+                      <option value="slide-left">Slide Left</option>
+                      <option value="slide-right">Slide Right</option>
+                      <option value="zoom">Zoom</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Heading Animation"
+                      value={block.headingAnimation || "fade"}
+                      onChange={(e) => updateBlock(index, { headingAnimation: e.target.value })}
+                    >
+                      <option value="none">None</option>
+                      <option value="fade">Fade</option>
+                      <option value="slide-up">Slide Up</option>
+                      <option value="slide-left">Slide Left</option>
+                      <option value="slide-right">Slide Right</option>
+                      <option value="zoom">Zoom</option>
+                    </SelectField>
+
+                    <SelectField
+                      label="Description Animation"
+                      value={block.descriptionAnimation || "fade"}
+                      onChange={(e) => updateBlock(index, { descriptionAnimation: e.target.value })}
+                    >
+                      <option value="none">None</option>
+                      <option value="fade">Fade</option>
+                      <option value="slide-up">Slide Up</option>
+                      <option value="slide-left">Slide Left</option>
+                      <option value="slide-right">Slide Right</option>
+                      <option value="zoom">Zoom</option>
+                    </SelectField>
+                  </div>
+                </div>
+
+                <div className="bg-gray-900/70 border border-gray-700 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">
+                    Image + Text block se image position, image size, text position,
+                    font, alignment aur animation website se control kar sakte ho.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
 };
 
-
 export default AdminPanel;
-
-
-
-
-

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FaUtensils, FaWineGlassAlt } from "react-icons/fa";
+import ContentBlocks from '../components/Contentblocks';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,6 +29,7 @@ const DEFAULT_ABOUT = {
     { icon: "utensils", label: "Fine Dining" },
     { icon: "wine", label: "Wine Pairing" },
   ],
+  content_blocks: [],
 };
 
 const About = () => {
@@ -74,7 +76,7 @@ const About = () => {
 
     // ==============================
     // GET ABOUT CONTENT FROM BACKEND
-    // (admin-edited text, image, badges)
+    // (admin-edited text, image, badges, content_blocks)
     // ==============================
     useEffect(() => {
         const fetchContent = async () => {
@@ -84,7 +86,7 @@ const About = () => {
 
                 const result = await response.json();
                 if (result.about) {
-                    setAbout(result.about);
+                    setAbout({ content_blocks: [], ...result.about });
                 }
             } catch (err) {
                 console.error("Site content fetch error:", err);
@@ -328,6 +330,20 @@ const About = () => {
 
                 </div>
 
+            </div>
+
+            {/* extra admin-added blocks — each image+heading+paragraph group
+                renders as its own image-left / content-right row, matching
+                the exact same layout style as the hardcoded section above.
+                Placed inside the "container px-6" div's width (not edge-to-
+                edge) since this is a left/right layout, not a full-bleed band. */}
+            <div className='relative z-10 mx-auto px-6 container mt-16'>
+                <ContentBlocks
+                    blocks={about.content_blocks}
+                    variant="split"
+                    headingClassName="text-[#F4EFE6]"
+                    paragraphClassName="text-[#F4EFE6]/75"
+                />
             </div>
 
         </section>
