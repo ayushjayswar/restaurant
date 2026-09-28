@@ -51,6 +51,7 @@ export function AuthProvider({ children }) {
 
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    window.location.href = "/";
   };
 
   // JWT token kisi protected API me bhejne ke liye

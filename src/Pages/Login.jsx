@@ -40,7 +40,7 @@ export default function Login({ onLoginSuccess }) {
       login(result.user, result.access_token);// global auth state update - Navbar ko turant pata chal jayega
       showToast("Successfully logged in!");
       if (onLoginSuccess) onLoginSuccess(result.user);
-      navigate("/"); // login ke baad homepage par bhej do
+      window.location.href = "/"; // login ke baad homepage par bhej do
     } catch (err) {
       setError("Server se connect nahi ho paya. Kya backend chal raha hai?");
     } finally {
