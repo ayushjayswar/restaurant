@@ -27,10 +27,8 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-import {
-  sendReservationStatusEmail,
-  sendRoomStatusEmail,
-} from "../services/EmailService";
+// NOTE: Status emails ab backend (SMTP) se automatically jaate hain,
+// isliye yahan EmailService import ki zarurat nahi.
 
 import ImageUploadField from "../components/Imageuploadfield";
 import DynamicListEditor from "../components/Dynamiclisteditor";
@@ -403,6 +401,7 @@ const AdminPanel = () => {
         return;
       }
 
+      // UI turant refresh — kisi email/notification ka wait nahi
       await loadAllData();
     } catch (error) {
       console.error(error);
@@ -411,6 +410,7 @@ const AdminPanel = () => {
 
   // ==============================
   // UPDATE ROOM BOOKING STATUS
+  // (customer email backend se SMTP ke through khud jaata hai)
   // ==============================
 
   const updateBookingStatus = async (id, status) => {
@@ -427,42 +427,6 @@ const AdminPanel = () => {
         return;
       }
 
-      const existingBooking =
-        roomBookings.find((b) => String(b.id) === String(id)) || {};
-
-      const updatedBooking = {
-        ...existingBooking,
-        ...(result.booking || result.room_booking || {}),
-      };
-
-      const customerEmail = updatedBooking.user_email || updatedBooking.email || "";
-      const customer = users.find((u) => u.email === customerEmail);
-      const bookedRoom = rooms.find(
-        (r) => String(r.id) === String(updatedBooking.room_id)
-      );
-
-      try {
-        await sendRoomStatusEmail({
-          id: updatedBooking.id ?? id,
-          user_email: customerEmail,
-          email: customerEmail,
-          name: updatedBooking.name || customer?.name || undefined,
-          roomName: bookedRoom?.name || `Room #${updatedBooking.room_id}`,
-          check_in: updatedBooking.check_in,
-          check_out: updatedBooking.check_out,
-          guests: updatedBooking.guests,
-          total_amount: updatedBooking.total_amount,
-          status: status,
-        });
-      } catch (emailError) {
-        console.error("Room booking status email failed:", emailError);
-        alert(
-          "Status updated, but the email to the " +
-          "customer could not be sent. " +
-          (emailError?.text || emailError?.message || "")
-        );
-      }
-
       await loadAllData();
     } catch (error) {
       console.error(error);
@@ -471,6 +435,7 @@ const AdminPanel = () => {
 
   // ==============================
   // UPDATE RESERVATION STATUS
+  // (customer + promoted waiting-list emails backend se khud jaate hain)
   // ==============================
 
   const updateReservationStatus = async (id, status) => {
@@ -485,70 +450,6 @@ const AdminPanel = () => {
       if (!response.ok) {
         alert(result.detail || "Failed to update reservation");
         return;
-      }
-
-      const updatedReservation = result.reservation || {};
-
-      try {
-        await sendReservationStatusEmail({
-          id: updatedReservation.id,
-          user_email: updatedReservation.user_email,
-          email: updatedReservation.user_email,
-          name: updatedReservation.name,
-          fullName: updatedReservation.name,
-          phone: updatedReservation.phone,
-          date: updatedReservation.date,
-          time: updatedReservation.time,
-          guests: updatedReservation.guests,
-          partySize: updatedReservation.guests,
-          message: updatedReservation.message,
-          feedback: updatedReservation.message,
-          status: updatedReservation.status,
-          tableNumber: updatedReservation.table_number,
-          table_number: updatedReservation.table_number,
-          tableRef: updatedReservation.table_number
-            ? `Table ${updatedReservation.table_number}`
-            : "",
-          waitingPosition: updatedReservation.waiting_position,
-          waiting_position: updatedReservation.waiting_position,
-        });
-      } catch (emailError) {
-        console.error("Reservation status email failed:", emailError);
-        alert(
-          "Status updated, but the email to the " +
-          "customer could not be sent."
-        );
-      }
-
-      if (result.promoted_reservations?.length) {
-        for (const promoted of result.promoted_reservations) {
-          try {
-            await sendReservationStatusEmail({
-              id: promoted.id,
-              user_email: promoted.user_email,
-              email: promoted.user_email,
-              name: promoted.name,
-              fullName: promoted.name,
-              phone: promoted.phone,
-              date: promoted.date,
-              time: promoted.time,
-              guests: promoted.guests,
-              partySize: promoted.guests,
-              message: promoted.message,
-              feedback: promoted.message,
-              status: promoted.status,
-              tableNumber: promoted.table_number,
-              table_number: promoted.table_number,
-              tableRef: promoted.table_number
-                ? `Table ${promoted.table_number}`
-                : "",
-              waitingPosition: promoted.waiting_position,
-              waiting_position: promoted.waiting_position,
-            });
-          } catch (emailError) {
-            console.error("Promoted reservation email failed:", emailError);
-          }
-        }
       }
 
       await loadAllData();
@@ -2256,6 +2157,75 @@ const RoomModal = ({ item, close, reload, authFetch }) => {
 /* =====================================================
    COMMON COMPONENTS
 ===================================================== */
+
+const Modal = ({ title, close, children }) => {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* BACKDROP */}
+      <div
+        onClick={close}
+        className="absolute inset-0 bg-black/70"
+      />
+
+      {/* MODAL BOX */}
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl">
+
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+
+          <button
+            onClick={close}
+            className="p-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {children}
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+
+const Select = ({ label, value, options, onChange }) => {
+  return (
+    <div>
+      <label className="block text-sm text-gray-400 mb-2">
+        {label}
+      </label>
+
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
+
+const SubmitButton = ({ text, disabled }) => {
+  return (
+    <button
+      type="submit"
+      disabled={disabled}
+      className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium text-white transition"
+    >
+      {text}
+    </button>
+  );
+};
+
 
 const ManagementLayout = ({ title, description, button, onAdd, children }) => {
   return (
