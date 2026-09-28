@@ -53,7 +53,6 @@ const AdminPanel = () => {
   const [reservations, setReservations] = useState([]);
   const [activity, setActivity] = useState([]);
 
-  // Home / About / Footer / Contact — site content admin controls
   const [siteContent, setSiteContent] = useState(null);
   const [contentSaving, setContentSaving] = useState(false);
 
@@ -62,7 +61,6 @@ const AdminPanel = () => {
   const [modal, setModal] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
 
-  // NOTIFICATION DROPDOWN
   const [showNotifications, setShowNotifications] = useState(false);
 
   // ==============================
@@ -71,16 +69,8 @@ const AdminPanel = () => {
 
   const sortNewestFirst = (data) => {
     return [...data].sort((a, b) => {
-      const aTime =
-        a.created_at
-          ? new Date(a.created_at).getTime()
-          : Number(a.id) || 0;
-
-      const bTime =
-        b.created_at
-          ? new Date(b.created_at).getTime()
-          : Number(b.id) || 0;
-
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : Number(a.id) || 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : Number(b.id) || 0;
       return bTime - aTime;
     });
   };
@@ -106,49 +96,42 @@ const AdminPanel = () => {
         authFetch("/admin/content"),
       ]);
 
-      // USERS
       if (results[0].status === "fulfilled" && results[0].value.ok) {
         const data = await results[0].value.json();
         setUsers(data.users || []);
       }
 
-      // FOOD
       if (results[1].status === "fulfilled" && results[1].value.ok) {
         const data = await results[1].value.json();
         setFood(data.food || []);
       }
 
-      // ROOMS
       if (results[2].status === "fulfilled" && results[2].value.ok) {
         const data = await results[2].value.json();
         setRooms(data.rooms || []);
       }
 
-      // ORDERS
       if (results[3].status === "fulfilled" && results[3].value.ok) {
         const data = await results[3].value.json();
         setOrders(sortNewestFirst(data.orders || []));
       }
 
-      // ROOM BOOKINGS
       if (results[4].status === "fulfilled" && results[4].value.ok) {
         const data = await results[4].value.json();
         setRoomBookings(sortNewestFirst(data.room_bookings || []));
       }
 
-      // RESERVATIONS
       if (results[5].status === "fulfilled" && results[5].value.ok) {
         const data = await results[5].value.json();
         setReservations(sortNewestFirst(data.reservations || []));
       }
 
-      // ACTIVITY
+      // ACTIVITY (sorting ActivityPage ke andar hoti hai)
       if (results[6].status === "fulfilled" && results[6].value.ok) {
         const data = await results[6].value.json();
         setActivity(data.activity || []);
       }
 
-      // SITE CONTENT (Home / About / Footer / Contact)
       if (results[7].status === "fulfilled" && results[7].value.ok) {
         const data = await results[7].value.json();
         setSiteContent(data);
@@ -190,11 +173,6 @@ const AdminPanel = () => {
     }
   };
 
-  // ==============================
-  // IMPORTANT
-  // HOOK ALWAYS RUNS
-  // ==============================
-
   useEffect(() => {
     if (user && user.role === "admin") {
       loadAllData();
@@ -202,42 +180,28 @@ const AdminPanel = () => {
   }, [user]);
 
   // ==============================
-  // ADMIN PROTECTION
-  // AFTER ALL HOOKS
+  // ADMIN PROTECTION (after all hooks)
   // ==============================
 
   if (!user || user.role !== "admin") {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center px-5">
         <div className="text-center">
-
-          <div className="text-6xl mb-5">
-            🔒
-          </div>
-
-          <h1 className="text-2xl font-bold text-white">
-            Admin Access Required
-          </h1>
-
+          <div className="text-6xl mb-5">🔒</div>
+          <h1 className="text-2xl font-bold text-white">Admin Access Required</h1>
           <p className="text-gray-400 mt-2 mb-6">
             You don't have permission to access this page.
           </p>
-
           <button
             onClick={() => navigate("/")}
             className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl text-white font-semibold transition"
           >
             Back to Website
           </button>
-
         </div>
       </div>
     );
   }
-
-  // ==============================
-  // LOGOUT
-  // ==============================
 
   const handleLogout = () => {
     logout();
@@ -245,19 +209,16 @@ const AdminPanel = () => {
   };
 
   // ==============================
-  // DELETE USER
+  // DELETE HELPERS
   // ==============================
 
   const deleteUser = async (email) => {
-    const confirmDelete = window.confirm(`Delete user ${email}?`);
-    if (!confirmDelete) return;
+    if (!window.confirm(`Delete user ${email}?`)) return;
 
     try {
-      const response = await authFetch(
-        `/admin/users/${encodeURIComponent(email)}`,
-        { method: "DELETE" }
-      );
-
+      const response = await authFetch(`/admin/users/${encodeURIComponent(email)}`, {
+        method: "DELETE",
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -271,10 +232,6 @@ const AdminPanel = () => {
       alert("Something went wrong");
     }
   };
-
-  // ==============================
-  // DELETE FOOD
-  // ==============================
 
   const deleteFood = async (id) => {
     if (!window.confirm("Delete this food item?")) return;
@@ -294,10 +251,6 @@ const AdminPanel = () => {
     }
   };
 
-  // ==============================
-  // DELETE ROOM
-  // ==============================
-
   const deleteRoom = async (id) => {
     if (!window.confirm("Delete this room?")) return;
 
@@ -315,10 +268,6 @@ const AdminPanel = () => {
       console.error(error);
     }
   };
-
-  // ==============================
-  // DELETE ORDER
-  // ==============================
 
   const deleteOrder = async (id) => {
     if (!window.confirm("Delete this order?")) return;
@@ -338,10 +287,6 @@ const AdminPanel = () => {
     }
   };
 
-  // ==============================
-  // DELETE ROOM BOOKING
-  // ==============================
-
   const deleteRoomBooking = async (id) => {
     if (!window.confirm("Delete this booking?")) return;
 
@@ -359,10 +304,6 @@ const AdminPanel = () => {
       console.error(error);
     }
   };
-
-  // ==============================
-  // DELETE RESERVATION
-  // ==============================
 
   const deleteReservation = async (id) => {
     if (!window.confirm("Delete this reservation?")) return;
@@ -384,7 +325,8 @@ const AdminPanel = () => {
   };
 
   // ==============================
-  // UPDATE ORDER STATUS
+  // STATUS UPDATES
+  // (emails backend se SMTP ke through khud jaate hain)
   // ==============================
 
   const updateOrderStatus = async (id, status) => {
@@ -393,7 +335,6 @@ const AdminPanel = () => {
         method: "PUT",
         body: JSON.stringify({ status }),
       });
-
       const result = await response.json();
 
       if (!response.ok) {
@@ -401,17 +342,11 @@ const AdminPanel = () => {
         return;
       }
 
-      // UI turant refresh — kisi email/notification ka wait nahi
       await loadAllData();
     } catch (error) {
       console.error(error);
     }
   };
-
-  // ==============================
-  // UPDATE ROOM BOOKING STATUS
-  // (customer email backend se SMTP ke through khud jaata hai)
-  // ==============================
 
   const updateBookingStatus = async (id, status) => {
     try {
@@ -419,7 +354,6 @@ const AdminPanel = () => {
         method: "PUT",
         body: JSON.stringify({ status }),
       });
-
       const result = await response.json();
 
       if (!response.ok) {
@@ -433,18 +367,12 @@ const AdminPanel = () => {
     }
   };
 
-  // ==============================
-  // UPDATE RESERVATION STATUS
-  // (customer + promoted waiting-list emails backend se khud jaate hain)
-  // ==============================
-
   const updateReservationStatus = async (id, status) => {
     try {
       const response = await authFetch(`/admin/reservations/${id}`, {
         method: "PUT",
         body: JSON.stringify({ status }),
       });
-
       const result = await response.json();
 
       if (!response.ok) {
@@ -474,7 +402,6 @@ const AdminPanel = () => {
     { id: "activity", name: "Activity", icon: Activity },
   ];
 
-  // Site content — Home / About / Footer / Contact — separate group
   const contentMenuItems = [
     { id: "home-content", name: "Home", icon: HomeIcon },
     { id: "about-content", name: "About Page", icon: Info },
@@ -482,34 +409,20 @@ const AdminPanel = () => {
     { id: "contact-content", name: "Contact", icon: Mail },
   ];
 
-  // ==============================
-  // TAB CHANGE
-  // ==============================
-
   const changeTab = (tab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
     setSearch("");
   };
 
-  // ==============================
-  // SEARCH
-  // ==============================
-
   const filterData = (data) => {
-    if (!search.trim()) {
-      return data;
-    }
-
+    if (!search.trim()) return data;
     const searchValue = search.toLowerCase();
-
-    return data.filter((item) =>
-      JSON.stringify(item).toLowerCase().includes(searchValue)
-    );
+    return data.filter((item) => JSON.stringify(item).toLowerCase().includes(searchValue));
   };
 
   // ==============================
-  // NOTIFICATIONS (derived from live data)
+  // NOTIFICATIONS
   // ==============================
 
   const pendingOrders = orders.filter((o) => o.status === "pending");
@@ -538,14 +451,21 @@ const AdminPanel = () => {
     return activeTab;
   };
 
+  const navButtonClass = (active) => `
+    w-full flex items-center gap-3 px-4 py-3 rounded-xl transition
+    ${
+      active
+        ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+        : "text-gray-400 hover:bg-gray-800 hover:text-white"
+    }
+  `;
+
   // ==============================
   // RENDER
   // ==============================
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex">
-
-      {/* MOBILE OVERLAY */}
 
       {sidebarOpen && (
         <div
@@ -554,83 +474,43 @@ const AdminPanel = () => {
         />
       )}
 
-      {/* =========================
-          SIDEBAR
-      ========================= */}
+      {/* SIDEBAR */}
 
       <aside
         className={`
-          fixed lg:sticky
-          top-0 left-0
-          z-50
-          h-screen
-          w-72
-          bg-gray-900
-          border-r border-gray-800
-          flex flex-col
+          fixed lg:sticky top-0 left-0 z-50 h-screen w-72
+          bg-gray-900 border-r border-gray-800 flex flex-col
           transition-transform duration-300
-          ${
-            sidebarOpen
-              ? "translate-x-0"
-              : "-translate-x-full lg:translate-x-0"
-          }
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
 
-        {/* LOGO */}
-
         <div className="h-20 px-6 flex items-center justify-between border-b border-gray-800">
-
           <div>
             <h1 className="text-2xl font-bold">
               Fork<span className="text-red-500">&</span>Flame
             </h1>
-
-            <p className="text-xs text-gray-500 mt-1">
-              Admin Dashboard
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Admin Dashboard</p>
           </div>
 
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-400"
-          >
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400">
             <X size={22} />
           </button>
-
         </div>
 
-        {/* ADMIN CARD */}
-
         <div className="p-5">
-
           <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-800">
-
             <div className="w-11 h-11 shrink-0 rounded-full bg-red-600 flex items-center justify-center font-bold text-lg">
               {user.name?.charAt(0)?.toUpperCase() || "A"}
             </div>
 
             <div className="min-w-0">
-
-              <p className="font-semibold truncate">
-                {user.name}
-              </p>
-
-              <p className="text-xs text-gray-400 truncate">
-                {user.email}
-              </p>
-
-              <p className="text-[10px] uppercase text-red-400 font-bold mt-1">
-                Administrator
-              </p>
-
+              <p className="font-semibold truncate">{user.name}</p>
+              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              <p className="text-[10px] uppercase text-red-400 font-bold mt-1">Administrator</p>
             </div>
-
           </div>
-
         </div>
-
-        {/* NAVIGATION */}
 
         <nav className="flex-1 px-4 overflow-y-auto">
 
@@ -639,37 +519,19 @@ const AdminPanel = () => {
           </p>
 
           <div className="space-y-1 mb-6">
-
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const active = activeTab === item.id;
-
               return (
                 <button
                   key={item.id}
                   onClick={() => changeTab(item.id)}
-                  className={`
-                    w-full
-                    flex
-                    items-center
-                    gap-3
-                    px-4
-                    py-3
-                    rounded-xl
-                    transition
-                    ${
-                      active
-                        ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                    }
-                  `}
+                  className={navButtonClass(activeTab === item.id)}
                 >
                   <Icon size={19} />
                   <span>{item.name}</span>
                 </button>
               );
             })}
-
           </div>
 
           <p className="text-[11px] uppercase tracking-wider text-gray-500 px-3 mb-3">
@@ -677,45 +539,24 @@ const AdminPanel = () => {
           </p>
 
           <div className="space-y-1">
-
             {contentMenuItems.map((item) => {
               const Icon = item.icon;
-              const active = activeTab === item.id;
-
               return (
                 <button
                   key={item.id}
                   onClick={() => changeTab(item.id)}
-                  className={`
-                    w-full
-                    flex
-                    items-center
-                    gap-3
-                    px-4
-                    py-3
-                    rounded-xl
-                    transition
-                    ${
-                      active
-                        ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                    }
-                  `}
+                  className={navButtonClass(activeTab === item.id)}
                 >
                   <Icon size={19} />
                   <span>{item.name}</span>
                 </button>
               );
             })}
-
           </div>
 
         </nav>
 
-        {/* SIDEBAR BOTTOM */}
-
         <div className="p-4 border-t border-gray-800 space-y-2">
-
           <button
             onClick={() => navigate("/")}
             className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition"
@@ -731,73 +572,53 @@ const AdminPanel = () => {
             <LogOut size={18} />
             Logout
           </button>
-
         </div>
 
       </aside>
 
-      {/* =========================
-          MAIN
-      ========================= */}
+      {/* MAIN */}
 
       <main className="flex-1 min-w-0">
 
-        {/* HEADER */}
-
         <header className="h-20 bg-gray-950 border-b border-gray-800 sticky top-0 z-30">
-
           <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
 
             <div className="flex items-center gap-4">
-
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden text-gray-300"
-              >
+              <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-300">
                 <Menu size={24} />
               </button>
 
               <div>
-
-                <h2 className="text-xl sm:text-2xl font-bold">
-                  {activeTabLabel()}
-                </h2>
-
+                <h2 className="text-xl sm:text-2xl font-bold">{activeTabLabel()}</h2>
                 <p className="hidden sm:block text-sm text-gray-500">
                   Manage your restaurant from here
                 </p>
-
               </div>
-
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
 
               {/* SEARCH */}
-
               {![
                 "dashboard",
+                "activity",
                 "home-content",
                 "about-content",
                 "footer-content",
                 "contact-content",
               ].includes(activeTab) && (
                 <div className="hidden md:flex items-center bg-gray-900 border border-gray-800 rounded-xl px-3">
-
                   <Search size={17} className="text-gray-500" />
-
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search..."
                     className="w-40 lg:w-56 bg-transparent outline-none px-3 py-2 text-sm text-white"
                   />
-
                 </div>
               )}
 
               {/* REFRESH */}
-
               <button
                 onClick={loadAllData}
                 className="p-2.5 bg-gray-900 border border-gray-800 rounded-xl hover:bg-gray-800 transition"
@@ -807,7 +628,6 @@ const AdminPanel = () => {
               </button>
 
               {/* NOTIFICATION */}
-
               <div className="relative">
 
                 <button
@@ -815,31 +635,22 @@ const AdminPanel = () => {
                   className="relative p-2.5 bg-gray-900 border border-gray-800 rounded-xl hover:bg-gray-800 transition"
                   title="Notifications"
                 >
-
                   <Bell size={19} />
-
                   {hasNotifications && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
                   )}
-
                 </button>
 
                 {showNotifications && (
                   <>
-                    <div
-                      onClick={() => setShowNotifications(false)}
-                      className="fixed inset-0 z-40"
-                    />
+                    <div onClick={() => setShowNotifications(false)} className="fixed inset-0 z-40" />
 
                     <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50">
 
                       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
                         <span className="font-semibold text-sm">Notifications</span>
-
                         {hasNotifications && (
-                          <span className="text-xs text-gray-500">
-                            {notificationCount} new
-                          </span>
+                          <span className="text-xs text-gray-500">{notificationCount} new</span>
                         )}
                       </div>
 
@@ -887,33 +698,23 @@ const AdminPanel = () => {
                             className="w-full text-left px-4 py-3 text-sm hover:bg-gray-800/50 transition"
                           >
                             <p className="text-white font-medium">Room booking #{b.id}</p>
-                            <p className="text-gray-500 text-xs mt-0.5">
-                              {b.user_email || "-"}
-                            </p>
+                            <p className="text-gray-500 text-xs mt-0.5">{b.user_email || "-"}</p>
                           </button>
                         ))}
 
                       </div>
-
                     </div>
                   </>
                 )}
 
               </div>
-
             </div>
-
           </div>
-
         </header>
 
-        {/* =========================
-            CONTENT
-        ========================= */}
+        {/* CONTENT */}
 
         <div className="p-4 sm:p-6 lg:p-8">
-
-          {/* DASHBOARD */}
 
           {activeTab === "dashboard" && (
             <Dashboard
@@ -927,8 +728,6 @@ const AdminPanel = () => {
               setActiveTab={setActiveTab}
             />
           )}
-
-          {/* USERS */}
 
           {activeTab === "users" && (
             <UsersPage
@@ -945,8 +744,6 @@ const AdminPanel = () => {
             />
           )}
 
-          {/* FOOD */}
-
           {activeTab === "food" && (
             <FoodPage
               data={filterData(food)}
@@ -961,8 +758,6 @@ const AdminPanel = () => {
               }}
             />
           )}
-
-          {/* ROOMS */}
 
           {activeTab === "rooms" && (
             <RoomsPage
@@ -979,8 +774,6 @@ const AdminPanel = () => {
             />
           )}
 
-          {/* ORDERS */}
-
           {activeTab === "orders" && (
             <OrdersPage
               data={filterData(orders)}
@@ -988,8 +781,6 @@ const AdminPanel = () => {
               onStatusChange={updateOrderStatus}
             />
           )}
-
-          {/* ROOM BOOKINGS */}
 
           {activeTab === "room-bookings" && (
             <RoomBookingsPage
@@ -999,13 +790,8 @@ const AdminPanel = () => {
             />
           )}
 
-          {/* ACTIVITY */}
-
-          {activeTab === "activity" && (
-            <ActivityPage data={filterData(activity)} />
-          )}
-
-          {/* RESERVATIONS */}
+          {/* ACTIVITY — filter ActivityPage ke andar hai */}
+          {activeTab === "activity" && <ActivityPage data={activity} />}
 
           {activeTab === "reservations" && (
             <ReservationsPage
@@ -1015,13 +801,11 @@ const AdminPanel = () => {
             />
           )}
 
-          {/* SITE CONTENT — loading guard for all four */}
-
-          {["home-content", "about-content", "footer-content", "contact-content"].includes(activeTab) &&
+          {["home-content", "about-content", "footer-content", "contact-content"].includes(
+            activeTab
+          ) &&
             !siteContent && (
-              <div className="text-center py-16 text-gray-500">
-                Loading content...
-              </div>
+              <div className="text-center py-16 text-gray-500">Loading content...</div>
             )}
 
           {activeTab === "home-content" && siteContent && (
@@ -1061,12 +845,9 @@ const AdminPanel = () => {
           )}
 
         </div>
-
       </main>
 
-      {/* =========================
-          MODALS
-      ========================= */}
+      {/* MODALS */}
 
       {modal === "user" && (
         <UserModal
@@ -1114,7 +895,6 @@ const Dashboard = ({
   activity,
   setActiveTab,
 }) => {
-
   const stats = [
     { title: "Total Users", value: users.length, icon: Users },
     { title: "Food Items", value: food.length, icon: UtensilsCrossed },
@@ -1129,56 +909,34 @@ const Dashboard = ({
     <div className="space-y-7">
 
       <div className="rounded-2xl p-6 sm:p-8 bg-gradient-to-r from-red-600/20 via-gray-900 to-gray-900 border border-red-500/20">
-
-        <p className="text-red-400 text-sm font-medium">
-          Welcome back, Admin 👋
-        </p>
-
-        <h1 className="text-2xl sm:text-3xl font-bold mt-2">
-          Restaurant Overview
-        </h1>
-
-        <p className="text-gray-400 mt-2">
-          Live data from your FastAPI backend.
-        </p>
-
+        <p className="text-red-400 text-sm font-medium">Welcome back, Admin 👋</p>
+        <h1 className="text-2xl sm:text-3xl font-bold mt-2">Restaurant Overview</h1>
+        <p className="text-gray-400 mt-2">Live data from your FastAPI backend.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-
         {stats.map((stat) => {
           const Icon = stat.icon;
-
           return (
             <div
               key={stat.title}
               className="bg-gray-900 border border-gray-800 rounded-2xl p-5 hover:border-red-500/30 transition"
             >
-
               <div className="w-11 h-11 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
                 <Icon size={21} />
               </div>
-
               <p className="text-gray-500 text-sm mt-5">{stat.title}</p>
-
               <h3 className="text-3xl font-bold mt-1">{stat.value}</h3>
-
             </div>
           );
         })}
-
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-
         <h3 className="text-lg font-semibold">Quick Actions</h3>
-
-        <p className="text-sm text-gray-500 mt-1">
-          Quickly open management sections.
-        </p>
+        <p className="text-sm text-gray-500 mt-1">Quickly open management sections.</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
-
           <QuickButton icon={Users} title="Users" onClick={() => setActiveTab("users")} />
           <QuickButton icon={UtensilsCrossed} title="Food" onClick={() => setActiveTab("food")} />
           <QuickButton icon={Hotel} title="Rooms" onClick={() => setActiveTab("rooms")} />
@@ -1187,9 +945,7 @@ const Dashboard = ({
             title="Reservations"
             onClick={() => setActiveTab("reservations")}
           />
-
         </div>
-
       </div>
 
     </div>
@@ -1401,18 +1157,226 @@ const RoomBookingsPage = ({ data, onDelete, onStatusChange }) => {
 
 
 /* =====================================================
-   ACTIVITY
+   ACTIVITY (newest first + date/time + filter)
 ===================================================== */
 
+const getActivityDate = (item) => {
+  const raw =
+    item.timestamp ||
+    item.created_at ||
+    item.time ||
+    item.datetime ||
+    item.date;
+
+  if (!raw) return null;
+
+  // Agar backend "2026-09-28 05:56:36" (bina timezone) bheje to UTC maano
+  let value = raw;
+  if (
+    typeof raw === "string" &&
+    /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?(\.\d+)?$/.test(raw)
+  ) {
+    value = raw.replace(" ", "T") + "Z";
+  }
+
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const formatActivityDate = (d) =>
+  d
+    ? d.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "-";
+
+const pad2 = (n) => String(n).padStart(2, "0");
+
+const toLocalInput = (d) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(
+    d.getHours()
+  )}:${pad2(d.getMinutes())}`;
+
 const ActivityPage = ({ data }) => {
+  const [showFilter, setShowFilter] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
+
+  const withMeta = data.map((item, index) => ({
+    item,
+    index,
+    date: getActivityDate(item),
+  }));
+
+  // Newest first. Bina time wali entries: list mein jo baad mein hai wo nayi
+  const sorted = [...withMeta].sort((a, b) => {
+    if (a.date && b.date) return b.date - a.date;
+    if (a.date && !b.date) return -1;
+    if (!a.date && b.date) return 1;
+    return b.index - a.index;
+  });
+
+  const actions = [
+    "all",
+    ...Array.from(new Set(data.map((i) => i.action).filter(Boolean))),
+  ];
+
+  const filtered = sorted.filter(({ item, date }) => {
+    if (actionFilter !== "all" && item.action !== actionFilter) return false;
+
+    if (searchText.trim()) {
+      const text = `${item.action || ""} ${item.user_email || ""} ${item.details || ""}`.toLowerCase();
+      if (!text.includes(searchText.trim().toLowerCase())) return false;
+    }
+
+    if (fromDate || toDate) {
+      if (!date) return false;
+      if (fromDate && date < new Date(fromDate)) return false;
+      if (toDate && date > new Date(toDate)) return false;
+    }
+
+    return true;
+  });
+
+  const setToday = () => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 0, 0);
+    setFromDate(toLocalInput(start));
+    setToDate(toLocalInput(end));
+  };
+
+  const setLast7Days = () => {
+    const start = new Date();
+    start.setDate(start.getDate() - 7);
+    setFromDate(toLocalInput(start));
+    setToDate(toLocalInput(new Date()));
+  };
+
+  const clearFilter = () => {
+    setFromDate("");
+    setToDate("");
+    setActionFilter("all");
+    setSearchText("");
+  };
+
+  const filterActive = fromDate || toDate || actionFilter !== "all" || searchText.trim();
+
+  const inputClass =
+    "w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg outline-none focus:border-red-500 text-white text-sm";
+
   return (
     <ManagementLayout title="Activity" description="View recent user and admin activity.">
-      <Table headers={["Action", "User", "Details", "Time"]}>
-        {data.length === 0 ? (
+
+      <div className="p-4 border-b border-gray-800 space-y-4">
+
+        <div className="flex items-center justify-between gap-3">
+          <button
+            onClick={() => setShowFilter((p) => !p)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition ${
+              filterActive
+                ? "bg-red-600 border-red-600 text-white"
+                : "bg-gray-800 border-gray-700 text-gray-300 hover:border-red-500"
+            }`}
+          >
+            <Search size={16} />
+            Filter
+            {filterActive && <span className="w-2 h-2 bg-white rounded-full" />}
+          </button>
+
+          <p className="text-xs text-gray-500">
+            {filtered.length} of {data.length} activities
+          </p>
+        </div>
+
+        {showFilter && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-2">From (date & time)</label>
+              <input
+                type="datetime-local"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-2">To (date & time)</label>
+              <input
+                type="datetime-local"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-2">Action</label>
+              <select
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                className={inputClass}
+              >
+                {actions.map((a) => (
+                  <option key={a} value={a}>
+                    {a === "all" ? "All actions" : a}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-xs text-gray-400 mb-2">Search (user / details)</label>
+              <input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="e.g. admin1@gmail.com"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="md:col-span-3 flex flex-wrap gap-2">
+              <button
+                onClick={setToday}
+                className="px-3 py-1.5 text-xs bg-gray-800 border border-gray-700 rounded-lg hover:border-red-500 text-gray-300"
+              >
+                Today
+              </button>
+              <button
+                onClick={setLast7Days}
+                className="px-3 py-1.5 text-xs bg-gray-800 border border-gray-700 rounded-lg hover:border-red-500 text-gray-300"
+              >
+                Last 7 days
+              </button>
+              <button
+                onClick={clearFilter}
+                className="px-3 py-1.5 text-xs bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/20"
+              >
+                Clear
+              </button>
+            </div>
+
+          </div>
+        )}
+
+      </div>
+
+      <Table headers={["Action", "User", "Details", "Date & Time"]}>
+        {filtered.length === 0 ? (
           <EmptyRow colSpan={4} />
         ) : (
-          data.map((item, index) => (
-            <tr key={item.id || index} className="border-t border-gray-800">
+          filtered.map(({ item, date }, index) => (
+            <tr key={item.id || index} className="border-t border-gray-800 hover:bg-gray-800/40">
               <td className="px-5 py-4">
                 <span className="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 text-xs">
                   {item.action || "-"}
@@ -1420,7 +1384,9 @@ const ActivityPage = ({ data }) => {
               </td>
               <td className="px-5 py-4 text-gray-400">{item.user_email || "-"}</td>
               <td className="px-5 py-4 text-gray-400">{item.details || "-"}</td>
-              <td className="px-5 py-4 text-gray-500">{item.timestamp || item.time || "-"}</td>
+              <td className="px-5 py-4 text-gray-500 whitespace-nowrap">
+                {formatActivityDate(date)}
+              </td>
             </tr>
           ))
         )}
@@ -1497,20 +1463,10 @@ const ReservationsPage = ({ data, onDelete, onStatusChange }) => {
 };
 
 
-const Input = ({
-  label,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  required = true,
-}) => {
+const Input = ({ label, type = "text", value, onChange, placeholder, required = true }) => {
   return (
     <div>
-      <label className="block text-sm text-gray-400 mb-2">
-        {label}
-      </label>
-
+      <label className="block text-sm text-gray-400 mb-2">{label}</label>
       <input
         type={type}
         value={value ?? ""}
@@ -1533,7 +1489,6 @@ const ContentLayout = ({ title, description, onSave, saving, children }) => {
     <div className="space-y-6 max-w-3xl">
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
         <div>
           <h1 className="text-2xl font-bold">{title}</h1>
           <p className="text-sm text-gray-500 mt-1">{description}</p>
@@ -1547,7 +1502,6 @@ const ContentLayout = ({ title, description, onSave, saving, children }) => {
           <Save size={18} />
           {saving ? "Saving..." : "Save Changes"}
         </button>
-
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
@@ -1630,7 +1584,6 @@ const ABOUT_BADGE_ICONS = ["utensils", "wine"];
 const AboutContentPage = ({ content, onSave, saving, authFetch }) => {
   const [form, setForm] = useState({ content_blocks: [], ...content });
 
-  // paragraphs are plain strings — wrap as {text} rows just for the editor
   const paragraphItems = (form.paragraphs || []).map((text) => ({ text }));
 
   return (
@@ -1837,7 +1790,6 @@ const ContactContentPage = ({ content, onSave, saving, authFetch }) => {
 ===================================================== */
 
 const UserModal = ({ item, close, reload, authFetch }) => {
-
   const [form, setForm] = useState({
     name: item?.name || "",
     username: item?.username || "",
@@ -1948,7 +1900,6 @@ const FOOD_CATEGORIES = [
 ];
 
 const FoodModal = ({ item, close, reload, authFetch }) => {
-
   const [form, setForm] = useState({
     name: item?.name || "",
     description: item?.description || "",
@@ -2055,7 +2006,6 @@ const FoodModal = ({ item, close, reload, authFetch }) => {
 ===================================================== */
 
 const RoomModal = ({ item, close, reload, authFetch }) => {
-
   const [form, setForm] = useState({
     name: item?.name || "",
     description: item?.description || "",
@@ -2077,7 +2027,7 @@ const RoomModal = ({ item, close, reload, authFetch }) => {
         description: form.description,
         price: Number(form.price),
         image: form.image,
-        facilities: form.facilities.split(",").map((item) => item.trim()).filter(Boolean),
+        facilities: form.facilities.split(",").map((f) => f.trim()).filter(Boolean),
         available: form.available,
       };
 
@@ -2161,13 +2111,8 @@ const RoomModal = ({ item, close, reload, authFetch }) => {
 const Modal = ({ title, close, children }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* BACKDROP */}
-      <div
-        onClick={close}
-        className="absolute inset-0 bg-black/70"
-      />
+      <div onClick={close} className="absolute inset-0 bg-black/70" />
 
-      {/* MODAL BOX */}
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl">
 
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
@@ -2181,9 +2126,7 @@ const Modal = ({ title, close, children }) => {
           </button>
         </div>
 
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6">{children}</div>
 
       </div>
     </div>
@@ -2194,9 +2137,7 @@ const Modal = ({ title, close, children }) => {
 const Select = ({ label, value, options, onChange }) => {
   return (
     <div>
-      <label className="block text-sm text-gray-400 mb-2">
-        {label}
-      </label>
+      <label className="block text-sm text-gray-400 mb-2">{label}</label>
 
       <select
         value={value ?? ""}
@@ -2232,7 +2173,6 @@ const ManagementLayout = ({ title, description, button, onAdd, children }) => {
     <div className="space-y-6">
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
         <div>
           <h1 className="text-2xl font-bold">{title}</h1>
           <p className="text-sm text-gray-500 mt-1">{description}</p>
@@ -2247,7 +2187,6 @@ const ManagementLayout = ({ title, description, button, onAdd, children }) => {
             {button}
           </button>
         )}
-
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
@@ -2343,9 +2282,8 @@ const QuickButton = ({ icon: Icon, title, onClick }) => {
 
 /* =====================================================
    CONTENT BLOCK EDITOR
-   Lets the client freely add/remove/reorder extra
-   heading / paragraph / image blocks inside a section,
-   without a developer having to add new fixed fields.
+   Client heading / paragraph / image blocks add, remove,
+   reorder kar sakta hai.
 ===================================================== */
 
 const BLOCK_TYPES = [
@@ -2360,6 +2298,59 @@ const CMS_SELECT_CLASS =
 
 const CMS_INPUT_CLASS =
   "w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg outline-none focus:border-red-500 text-white text-sm";
+
+const FONT_LIST = ["Poppins", "Inter", "Roboto", "Montserrat", "Playfair Display", "Georgia"];
+
+const ANIMATION_LIST = [
+  ["none", "None"],
+  ["fade", "Fade"],
+  ["slide-up", "Slide Up"],
+  ["slide-left", "Slide Left"],
+  ["slide-right", "Slide Right"],
+  ["zoom", "Zoom"],
+];
+
+const ALIGN_LIST = [
+  ["left", "Left"],
+  ["center", "Center"],
+  ["right", "Right"],
+];
+
+const SIZE_LIST = [
+  ["small", "Small"],
+  ["medium", "Medium"],
+  ["large", "Large"],
+  ["xlarge", "Extra Large"],
+];
+
+const FIT_LIST = [
+  ["cover", "Cover"],
+  ["contain", "Contain"],
+  ["fill", "Fill"],
+];
+
+const IMAGE_SIZE_LIST = [
+  ["small", "Small"],
+  ["medium", "Medium"],
+  ["large", "Large"],
+  ["full", "Full Screen"],
+];
+
+// Defined outside so inputs do not remount on every keystroke
+const SelectField = ({ label, value, onChange, options }) => (
+  <div>
+    <label className="block text-xs text-gray-400 mb-2">{label}</label>
+    <select value={value} onChange={onChange} className={CMS_SELECT_CLASS}>
+      {options.map(([val, text]) => (
+        <option key={val} value={val}>
+          {text}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const FONT_OPTIONS = FONT_LIST.map((f) => [f, f]);
 
 const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
   const blocks = items || [];
@@ -2440,15 +2431,6 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
     onChange(updated);
   };
 
-  const SelectField = ({ label: fieldLabel, value, onChange: handleChange, children }) => (
-    <div>
-      <label className="block text-xs text-gray-400 mb-2">{fieldLabel}</label>
-      <select value={value} onChange={handleChange} className={CMS_SELECT_CLASS}>
-        {children}
-      </select>
-    </div>
-  );
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2520,6 +2502,7 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
               </div>
             </div>
 
+            {/* HEADING */}
             {block.type === "heading" && (
               <div className="space-y-4">
                 <div>
@@ -2537,52 +2520,32 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                     label="Alignment"
                     value={block.textAlign || "center"}
                     onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
-                  >
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                  </SelectField>
-
+                    options={ALIGN_LIST}
+                  />
                   <SelectField
                     label="Font"
                     value={block.font || "Poppins"}
                     onChange={(e) => updateBlock(index, { font: e.target.value })}
-                  >
-                    <option value="Poppins">Poppins</option>
-                    <option value="Inter">Inter</option>
-                    <option value="Roboto">Roboto</option>
-                    <option value="Montserrat">Montserrat</option>
-                    <option value="Playfair Display">Playfair Display</option>
-                    <option value="Georgia">Georgia</option>
-                  </SelectField>
-
+                    options={FONT_OPTIONS}
+                  />
                   <SelectField
                     label="Font Size"
                     value={block.fontSize || "large"}
                     onChange={(e) => updateBlock(index, { fontSize: e.target.value })}
-                  >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                    <option value="xlarge">Extra Large</option>
-                  </SelectField>
+                    options={SIZE_LIST}
+                  />
                 </div>
 
                 <SelectField
                   label="Animation"
                   value={block.animation || "fade"}
                   onChange={(e) => updateBlock(index, { animation: e.target.value })}
-                >
-                  <option value="none">None</option>
-                  <option value="fade">Fade</option>
-                  <option value="slide-up">Slide Up</option>
-                  <option value="slide-left">Slide Left</option>
-                  <option value="slide-right">Slide Right</option>
-                  <option value="zoom">Zoom</option>
-                </SelectField>
+                  options={ANIMATION_LIST}
+                />
               </div>
             )}
 
+            {/* PARAGRAPH */}
             {block.type === "paragraph" && (
               <div className="space-y-4">
                 <div>
@@ -2601,51 +2564,32 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                     label="Alignment"
                     value={block.textAlign || "center"}
                     onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
-                  >
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                  </SelectField>
-
+                    options={ALIGN_LIST}
+                  />
                   <SelectField
                     label="Font"
                     value={block.font || "Poppins"}
                     onChange={(e) => updateBlock(index, { font: e.target.value })}
-                  >
-                    <option value="Poppins">Poppins</option>
-                    <option value="Inter">Inter</option>
-                    <option value="Roboto">Roboto</option>
-                    <option value="Montserrat">Montserrat</option>
-                    <option value="Playfair Display">Playfair Display</option>
-                    <option value="Georgia">Georgia</option>
-                  </SelectField>
-
+                    options={FONT_OPTIONS}
+                  />
                   <SelectField
                     label="Font Size"
                     value={block.fontSize || "medium"}
                     onChange={(e) => updateBlock(index, { fontSize: e.target.value })}
-                  >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </SelectField>
+                    options={SIZE_LIST.slice(0, 3)}
+                  />
                 </div>
 
                 <SelectField
                   label="Animation"
                   value={block.animation || "fade"}
                   onChange={(e) => updateBlock(index, { animation: e.target.value })}
-                >
-                  <option value="none">None</option>
-                  <option value="fade">Fade</option>
-                  <option value="slide-up">Slide Up</option>
-                  <option value="slide-left">Slide Left</option>
-                  <option value="slide-right">Slide Right</option>
-                  <option value="zoom">Zoom</option>
-                </SelectField>
+                  options={ANIMATION_LIST}
+                />
               </div>
             )}
 
+            {/* IMAGE */}
             {block.type === "image" && (
               <div className="space-y-5">
                 <ImageUploadField
@@ -2663,33 +2607,25 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                       label="Image Position"
                       value={block.imagePosition || "center"}
                       onChange={(e) => updateBlock(index, { imagePosition: e.target.value })}
-                    >
-                      <option value="left">Left</option>
-                      <option value="center">Center</option>
-                      <option value="right">Right</option>
-                      <option value="full">Full Width</option>
-                    </SelectField>
-
+                      options={[
+                        ["left", "Left"],
+                        ["center", "Center"],
+                        ["right", "Right"],
+                        ["full", "Full Width"],
+                      ]}
+                    />
                     <SelectField
                       label="Image Size"
                       value={block.imageSize || "large"}
                       onChange={(e) => updateBlock(index, { imageSize: e.target.value })}
-                    >
-                      <option value="small">Small</option>
-                      <option value="medium">Medium</option>
-                      <option value="large">Large</option>
-                      <option value="full">Full Screen</option>
-                    </SelectField>
-
+                      options={IMAGE_SIZE_LIST}
+                    />
                     <SelectField
                       label="Image Fit"
                       value={block.imageFit || "cover"}
                       onChange={(e) => updateBlock(index, { imageFit: e.target.value })}
-                    >
-                      <option value="cover">Cover</option>
-                      <option value="contain">Contain</option>
-                      <option value="fill">Fill</option>
-                    </SelectField>
+                      options={FIT_LIST}
+                    />
                   </div>
                 </div>
 
@@ -2700,12 +2636,13 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                     label="Text Position"
                     value={block.textPosition || "none"}
                     onChange={(e) => updateBlock(index, { textPosition: e.target.value })}
-                  >
-                    <option value="none">No Text</option>
-                    <option value="overlay">On Image (Overlay)</option>
-                    <option value="above">Above Image</option>
-                    <option value="below">Below Image</option>
-                  </SelectField>
+                    options={[
+                      ["none", "No Text"],
+                      ["overlay", "On Image (Overlay)"],
+                      ["above", "Above Image"],
+                      ["below", "Below Image"],
+                    ]}
+                  />
 
                   {block.textPosition && block.textPosition !== "none" && (
                     <div className="space-y-4 mt-4">
@@ -2735,35 +2672,20 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                           label="Text Alignment"
                           value={block.textAlign || "center"}
                           onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
-                        >
-                          <option value="left">Left</option>
-                          <option value="center">Center</option>
-                          <option value="right">Right</option>
-                        </SelectField>
-
+                          options={ALIGN_LIST}
+                        />
                         <SelectField
                           label="Font"
                           value={block.font || "Poppins"}
                           onChange={(e) => updateBlock(index, { font: e.target.value })}
-                        >
-                          <option value="Poppins">Poppins</option>
-                          <option value="Inter">Inter</option>
-                          <option value="Roboto">Roboto</option>
-                          <option value="Montserrat">Montserrat</option>
-                          <option value="Playfair Display">Playfair Display</option>
-                          <option value="Georgia">Georgia</option>
-                        </SelectField>
-
+                          options={FONT_OPTIONS}
+                        />
                         <SelectField
                           label="Font Size"
                           value={block.fontSize || "large"}
                           onChange={(e) => updateBlock(index, { fontSize: e.target.value })}
-                        >
-                          <option value="small">Small</option>
-                          <option value="medium">Medium</option>
-                          <option value="large">Large</option>
-                          <option value="xlarge">Extra Large</option>
-                        </SelectField>
+                          options={SIZE_LIST}
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -2771,49 +2693,31 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                           label="Heading Animation"
                           value={block.headingAnimation || block.textAnimation || "fade"}
                           onChange={(e) => updateBlock(index, { headingAnimation: e.target.value })}
-                        >
-                          <option value="none">None</option>
-                          <option value="fade">Fade</option>
-                          <option value="slide-up">Slide Up</option>
-                          <option value="slide-left">Slide Left</option>
-                          <option value="slide-right">Slide Right</option>
-                          <option value="zoom">Zoom</option>
-                        </SelectField>
-
+                          options={ANIMATION_LIST}
+                        />
                         <SelectField
                           label="Description Animation"
                           value={block.descriptionAnimation || block.textAnimation || "fade"}
-                          onChange={(e) => updateBlock(index, { descriptionAnimation: e.target.value })}
-                        >
-                          <option value="none">None</option>
-                          <option value="fade">Fade</option>
-                          <option value="slide-up">Slide Up</option>
-                          <option value="slide-left">Slide Left</option>
-                          <option value="slide-right">Slide Right</option>
-                          <option value="zoom">Zoom</option>
-                        </SelectField>
+                          onChange={(e) =>
+                            updateBlock(index, { descriptionAnimation: e.target.value })
+                          }
+                          options={ANIMATION_LIST}
+                        />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div>
-                  <SelectField
-                    label="Image Animation"
-                    value={block.animation || "fade"}
-                    onChange={(e) => updateBlock(index, { animation: e.target.value })}
-                  >
-                    <option value="none">None</option>
-                    <option value="fade">Fade</option>
-                    <option value="slide-up">Slide Up</option>
-                    <option value="slide-left">Slide Left</option>
-                    <option value="slide-right">Slide Right</option>
-                    <option value="zoom">Zoom</option>
-                  </SelectField>
-                </div>
+                <SelectField
+                  label="Image Animation"
+                  value={block.animation || "fade"}
+                  onChange={(e) => updateBlock(index, { animation: e.target.value })}
+                  options={ANIMATION_LIST}
+                />
               </div>
             )}
 
+            {/* IMAGE + TEXT */}
             {block.type === "image-text" && (
               <div className="space-y-5">
                 <ImageUploadField
@@ -2852,55 +2756,43 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                       label="Image Position"
                       value={block.imagePosition || "left"}
                       onChange={(e) => updateBlock(index, { imagePosition: e.target.value })}
-                    >
-                      <option value="left">Left</option>
-                      <option value="right">Right</option>
-                      <option value="center">Center</option>
-                      <option value="full">Full Width</option>
-                    </SelectField>
-
+                      options={[
+                        ["left", "Left"],
+                        ["right", "Right"],
+                        ["center", "Center"],
+                        ["full", "Full Width"],
+                      ]}
+                    />
                     <SelectField
                       label="Image Size"
                       value={block.imageSize || "medium"}
                       onChange={(e) => updateBlock(index, { imageSize: e.target.value })}
-                    >
-                      <option value="small">Small</option>
-                      <option value="medium">Medium</option>
-                      <option value="large">Large</option>
-                      <option value="full">Full Screen</option>
-                    </SelectField>
-
+                      options={IMAGE_SIZE_LIST}
+                    />
                     <SelectField
                       label="Image Fit"
                       value={block.imageFit || "cover"}
                       onChange={(e) => updateBlock(index, { imageFit: e.target.value })}
-                    >
-                      <option value="cover">Cover</option>
-                      <option value="contain">Contain</option>
-                      <option value="fill">Fill</option>
-                    </SelectField>
-
+                      options={FIT_LIST}
+                    />
                     <SelectField
                       label="Text Position"
                       value={block.textPosition || "right"}
                       onChange={(e) => updateBlock(index, { textPosition: e.target.value })}
-                    >
-                      <option value="above">Above Image</option>
-                      <option value="below">Below Image</option>
-                      <option value="left">Left</option>
-                      <option value="right">Right</option>
-                      <option value="overlay">Overlay</option>
-                    </SelectField>
-
+                      options={[
+                        ["above", "Above Image"],
+                        ["below", "Below Image"],
+                        ["left", "Left"],
+                        ["right", "Right"],
+                        ["overlay", "Overlay"],
+                      ]}
+                    />
                     <SelectField
                       label="Text Alignment"
                       value={block.textAlign || "left"}
                       onChange={(e) => updateBlock(index, { textAlign: e.target.value })}
-                    >
-                      <option value="left">Left</option>
-                      <option value="center">Center</option>
-                      <option value="right">Right</option>
-                    </SelectField>
+                      options={ALIGN_LIST}
+                    />
                   </div>
                 </div>
 
@@ -2912,64 +2804,32 @@ const ContentBlockEditor = ({ label, items, onChange, authFetch }) => {
                       label="Font"
                       value={block.font || "Poppins"}
                       onChange={(e) => updateBlock(index, { font: e.target.value })}
-                    >
-                      <option value="Poppins">Poppins</option>
-                      <option value="Inter">Inter</option>
-                      <option value="Roboto">Roboto</option>
-                      <option value="Montserrat">Montserrat</option>
-                      <option value="Playfair Display">Playfair Display</option>
-                      <option value="Georgia">Georgia</option>
-                    </SelectField>
-
+                      options={FONT_OPTIONS}
+                    />
                     <SelectField
                       label="Heading Size"
                       value={block.headingSize || "large"}
                       onChange={(e) => updateBlock(index, { headingSize: e.target.value })}
-                    >
-                      <option value="small">Small</option>
-                      <option value="medium">Medium</option>
-                      <option value="large">Large</option>
-                      <option value="xlarge">Extra Large</option>
-                    </SelectField>
-
+                      options={SIZE_LIST}
+                    />
                     <SelectField
                       label="Image Animation"
                       value={block.animation || "fade"}
                       onChange={(e) => updateBlock(index, { animation: e.target.value })}
-                    >
-                      <option value="none">None</option>
-                      <option value="fade">Fade</option>
-                      <option value="slide-up">Slide Up</option>
-                      <option value="slide-left">Slide Left</option>
-                      <option value="slide-right">Slide Right</option>
-                      <option value="zoom">Zoom</option>
-                    </SelectField>
-
+                      options={ANIMATION_LIST}
+                    />
                     <SelectField
                       label="Heading Animation"
                       value={block.headingAnimation || "fade"}
                       onChange={(e) => updateBlock(index, { headingAnimation: e.target.value })}
-                    >
-                      <option value="none">None</option>
-                      <option value="fade">Fade</option>
-                      <option value="slide-up">Slide Up</option>
-                      <option value="slide-left">Slide Left</option>
-                      <option value="slide-right">Slide Right</option>
-                      <option value="zoom">Zoom</option>
-                    </SelectField>
-
+                      options={ANIMATION_LIST}
+                    />
                     <SelectField
                       label="Description Animation"
                       value={block.descriptionAnimation || "fade"}
                       onChange={(e) => updateBlock(index, { descriptionAnimation: e.target.value })}
-                    >
-                      <option value="none">None</option>
-                      <option value="fade">Fade</option>
-                      <option value="slide-up">Slide Up</option>
-                      <option value="slide-left">Slide Left</option>
-                      <option value="slide-right">Slide Right</option>
-                      <option value="zoom">Zoom</option>
-                    </SelectField>
+                      options={ANIMATION_LIST}
+                    />
                   </div>
                 </div>
 
