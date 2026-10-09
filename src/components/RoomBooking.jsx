@@ -8,11 +8,20 @@ import { sendRoomBooking } from '../services/EmailService';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Room details - normal hotel rooms, Indian pricing
+// Hotel mein sirf ek hi type ka room hai
+const DEFAULT_FACILITIES = ['AC', 'WiFi', 'Separate Lat-Bath'];
+
 const ROOMS_FALLBACK = [
-  { id: 1, name: 'Normal Room', capacity: '2 Adults + 1 Child', nightPrice: 1500, dayNightPrice: 2000, description: 'A comfortable room with a queen-size bed, attached bathroom, and a work desk. Great for solo travelers or couples.', image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0' },
-  { id: 2, name: 'Family Suite', capacity: '4 Adults + 2 Children', nightPrice: 1500, dayNightPrice: 2000, description: 'A spacious suite with two beds, a sitting area, and extra storage. Perfect for families travelling together.', image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0' },
-  { id: 3, name: 'Premium Room', capacity: '2 Adults', nightPrice: 1500, dayNightPrice: 2000, description: 'Our best room with a balcony, premium furnishing, and a mini fridge. Ideal for a relaxed, comfortable stay.', image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0' },
+  {
+    id: 1,
+    name: 'Room',
+    capacity: '2 Adults + 1 Child',
+    nightPrice: 1500,
+    dayNightPrice: 2000,
+    facilities: DEFAULT_FACILITIES,
+    description: 'A comfortable AC room with WiFi and a separate lat-bath. Great for solo travelers, couples and small families.',
+    image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0',
+  },
 ];
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -79,14 +88,19 @@ export default function RoomBooking() {
         const response = await fetch('https://lcd-dressing-jim-oven.trycloudflare.com/rooms');
         if (!response.ok) throw new Error('Rooms fetch failed');
         const result = await response.json();
-        const backendRooms = (result.rooms || []).map((room) => ({
+        const base = ROOMS_FALLBACK[0];
+        const backendRooms = (result.rooms || []).slice(0, 1).map((room) => ({
           id: room.id,
-          name: room.name,
-          capacity: room.capacity || 'Guests welcome',
-          nightPrice: Number(room.price || 1500),
-          dayNightPrice: Number(room.price || 1500),
-          description: room.description || '',
-          image: room.image || '',
+          name: room.name || base.name,
+          capacity: room.capacity || base.capacity,
+          nightPrice: Number(room.price || base.nightPrice),
+          dayNightPrice: Number(room.price_day_night || base.dayNightPrice),
+          facilities:
+            Array.isArray(room.facilities) && room.facilities.length > 0
+              ? room.facilities
+              : base.facilities,
+          description: room.description || base.description,
+          image: room.image || base.image,
         }));
         if (backendRooms.length > 0) {
           setRooms(backendRooms);
@@ -401,6 +415,14 @@ export default function RoomBooking() {
               </div>
               <div className="text-[#B08D57] text-sm">{room.capacity}</div>
 
+              <div className="flex flex-wrap gap-2 text-sm">
+                {(room.facilities || []).map((f) => (
+                  <span key={f} className="border border-[#B08D57]/50 text-[#B08D57] px-3 py-1 rounded-[3px]">
+                    {f}
+                  </span>
+                ))}
+              </div>
+
               <div className="flex gap-4 text-sm">
                 <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-[3px]">
                   Night: <strong className="text-[#FF7A45]">₹{room.nightPrice}</strong>
@@ -420,7 +442,7 @@ export default function RoomBooking() {
                   document.getElementById('rb-ticket')?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
-                Reserve this room
+                Reserve a room
               </button>
             </div>
           </div>
@@ -548,38 +570,20 @@ export default function RoomBooking() {
               />
             </div>
             <div className="flex flex-col gap-1.5 mb-4">
-              <label htmlFor="rb-room" className="text-xs text-[#F4EFE6]/65">
-                Room type
+              <label htmlFor="rb-roomsCount" className="text-xs text-[#F4EFE6]/65">
+                Number of rooms
               </label>
-              <select
-                id="rb-room"
-                value={form.room}
-                onChange={handleChange('room')}
+              <input
+                id="rb-roomsCount"
+                type="number"
+                min="1"
+                step="1"
+                required
+                value={form.roomsCount}
+                onChange={handleChange('roomsCount')}
                 className={inputClass}
-              >
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5 mb-4">
-            <label htmlFor="rb-roomsCount" className="text-xs text-[#F4EFE6]/65">
-              Number of rooms
-            </label>
-            <input
-              id="rb-roomsCount"
-              type="number"
-              min="1"
-              step="1"
-              required
-              value={form.roomsCount}
-              onChange={handleChange('roomsCount')}
-              className={inputClass}
-            />
           </div>
 
           <div className="flex flex-col gap-1.5 mb-4">
@@ -632,7 +636,7 @@ export default function RoomBooking() {
               ref={confirmRef}
               className="mt-6 bg-[#C1440E]/10 border border-[#C1440E] px-4 py-3.5 rounded-[3px] text-sm opacity-0"
             >
-              Your request for {roomsCount} × {selectedRoom?.name} ({days} {days === 1 ? 'day' : 'days'}) from {form.date} {form.time} to{' '}
+              Your request for {roomsCount} {roomsCount === 1 ? 'room' : 'rooms'} ({days} {days === 1 ? 'day' : 'days'}) from {form.date} {form.time} to{' '}
               {form.outDate} {form.outTime} (₹{totalAmount}) has been received and is
               pending confirmation. We'll email {form.email} once it's confirmed.
             </div>
