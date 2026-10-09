@@ -377,7 +377,7 @@ export default function RoomBooking() {
         </h1>
         <p className="rb-subtitle relative z-10 mt-6 max-w-[42ch] text-[#F4EFE6]/75 text-[1.05rem] leading-relaxed">
           Comfortable rooms at simple, honest pricing. Night stay at ₹1500,
-          or Day &amp; Night stay at ₹2000.
+          or Day &amp; Night stay at ₹2500.
         </p>
         <div className="rb-hero-cta relative z-10 mt-9">
           <button
