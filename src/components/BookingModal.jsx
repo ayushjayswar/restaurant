@@ -3,9 +3,22 @@ import { FaCheck } from "react-icons/fa";
 
 const BookingModal = ({ isOpen, onClose, bookingData }) => {
     if (!isOpen || !bookingData) return null;
+
+    const details = [
+        { label: 'Date', value: bookingData.date },
+        { label: 'Time', value: bookingData.time },
+        { label: 'Party Size', value: bookingData.partySize },
+        { label: 'Table', value: bookingData.tableRef },
+        { label: 'Full Name', value: bookingData.fullName },
+        { label: 'Phone', value: bookingData.phone },
+        { label: 'Email', value: bookingData.email },
+        { label: 'Feedback', value: bookingData.feedback },
+    ];
+
     return (
         <div className='fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.25s_ease-out]'>
-            <div className='bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-lg animate-[popIn_0.35s_cubic-bezier(0.34,1.56,0.64,1)]'>
+            {/* text-gray-800 yahan set hai taaki page ka light/orange color inherit na ho */}
+            <div className='bg-white text-gray-800 rounded-lg p-8 max-w-md w-full mx-4 shadow-lg animate-[popIn_0.35s_cubic-bezier(0.34,1.56,0.64,1)]'>
                 <div className='text-center'>
                     <div className='relative w-16 h-16 mx-auto mb-4 flex items-center justify-center'>
                         <span className='absolute inline-flex h-16 w-16 rounded-full bg-green-400 opacity-75 animate-ping'></span>
@@ -15,51 +28,31 @@ const BookingModal = ({ isOpen, onClose, bookingData }) => {
                             />
                         </div>
                     </div>
+
                     <h3 className='text-2xl font-bold text-gray-800 mb-2 animate-[fadeInUp_0.4s_ease-out_0.1s_both]'>
-                    Pending — Awaiting Admin Confirmation!
+                        Pending — Awaiting Admin Confirmation!
                     </h3>
+
                     <p className='text-gray-600 mb-6 animate-[fadeInUp_0.4s_ease-out_0.2s_both]'>
-                    Your table reservation has been received successfully. We will confirm your reservation shortly!
+                        Your table reservation has been received successfully. We will confirm your reservation shortly!
                     </p>
-                    <div className='bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-2 animate-[fadeInUp_0.4s_ease-out_0.3s_both]'>
-                        <p>
-                            <span className='font-semibold'>Date:</span>{' '}
-                            {bookingData.date}
-                        </p>
-                        <p>
-                            <span className='font-semibold'>Time:</span>{' '}
-                            {bookingData.time}
-                        </p>
-                        <p>
-                            <span className='font-semibold'>Party Size:</span>{' '}
-                            {bookingData.partySize}
-                        </p>
-                        <p>
-                            <span className='font-semibold'>Table:</span>{' '}
-                            {bookingData.tableRef}
-                        </p>
-                        <p>
-                            <span className='font-semibold'>Full Name:</span>{' '}
-                            {bookingData.fullName}
-                        </p>
-                        <p>
-                            <span className='font-semibold'>Phone:</span>{' '}
-                            {bookingData.phone}
-                        </p>
-                        <p>
-                            <span className='font-semibold'>Email:</span>{' '}
-                            {bookingData.email}
-                        </p>
-                        <p>
-                            <span className='font-semibold'>Feedback:</span>{' '}
-                            {bookingData.feedback}
-                        </p>
+
+                    <div className='bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left space-y-2 text-gray-800 animate-[fadeInUp_0.4s_ease-out_0.3s_both]'>
+                        {details.map(({ label, value }) => (
+                            <p key={label}>
+                                <span className='font-semibold text-gray-900'>{label}:</span>{' '}
+                                <span className='text-gray-700 break-words'>
+                                    {value || '—'}
+                                </span>
+                            </p>
+                        ))}
                     </div>
+
                     <button
                         onClick={onClose}
                         className='bg-red-700 hover:bg-red-800 text-white py-2 px-6 rounded-full transition cursor-pointer animate-[fadeInUp_0.4s_ease-out_0.4s_both]'
                     >
-                        Confirmed
+                        Close
                     </button>
                 </div>
             </div>

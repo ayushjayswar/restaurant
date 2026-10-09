@@ -11,6 +11,7 @@ import Contact from './components/Contact';
 import RoomBooking from './components/RoomBooking';
 import ScrollToTop from "./components/ScrollToTop";
 import InstallPrompt from "./components/Installprompt";
+import ChatWidget from "./components/ChatWidget";
 
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
@@ -77,8 +78,11 @@ const App = () => {
 
       </main>
 
+      {/* Chat Widget */}
+      {!isAdminPage && <ChatWidget />}
+
       {/* Website Footer */}
-      {!hideFooter && !isAdminPage && <Footer />}
+      {!hideFooter && !isAdminPage && <Footer />} 
 
     </div>
   )
