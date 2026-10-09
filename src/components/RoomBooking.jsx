@@ -17,7 +17,7 @@ const ROOMS_FALLBACK = [
     name: 'Room',
     capacity: '2 Adults + 1 Child',
     nightPrice: 1500,
-    dayNightPrice: 2000,
+    dayNightPrice: 2500,
     facilities: DEFAULT_FACILITIES,
     description: 'A comfortable AC room with WiFi and a separate lat-bath. Great for solo travelers, couples and small families.',
     image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0',
