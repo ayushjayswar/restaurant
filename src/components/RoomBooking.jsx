@@ -15,6 +15,18 @@ const ROOMS_FALLBACK = [
   { id: 3, name: 'Premium Room', capacity: '2 Adults', nightPrice: 1500, dayNightPrice: 2000, description: 'Our best room with a balcony, premium furnishing, and a mini fridge. Ideal for a relaxed, comfortable stay.', image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0' },
 ];
 
+const pad = (n) => String(n).padStart(2, '0');
+
+// "2026-10-10" -> "2026-10-11"
+const nextDay = (dateStr) => {
+  const dt = new Date(`${dateStr}T00:00`);
+  dt.setDate(dt.getDate() + 1);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+};
+
+const inputClass =
+  'bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]';
+
 export default function RoomBooking() {
   const navigate = useNavigate();
   const { requireAuth, user, authFetch } = useAuth();
@@ -31,14 +43,34 @@ export default function RoomBooking() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    date: '',
-    time: '',
+    date: '',     // check-in date
+    time: '',     // check-in time
+    outDate: '',  // check-out date
+    outTime: '',  // check-out time
     guests: '',
     room: ROOMS_FALLBACK[0].id,
     stayType: 'night', // 'night' ya 'daynight'
   });
   const [status, setStatus] = useState('idle'); // idle | sending | reserved
   const [error, setError] = useState('');
+
+  // Logged-in user ka email form mein pehle se bhar do (user badal sakta hai)
+  useEffect(() => {
+    if (user?.email) {
+      setForm((f) => (f.email ? f : { ...f, email: user.email }));
+    }
+  }, [user]);
+
+  // Check-in choose karte hi check-out agle din usi time par auto-fill hota hai.
+  // User chahe to check-out date/time baad mein edit kar sakta hai.
+  useEffect(() => {
+    if (!form.date) return;
+    setForm((f) => ({
+      ...f,
+      outDate: nextDay(f.date),
+      outTime: f.time || f.outTime,
+    }));
+  }, [form.date, form.time]);
 
   useEffect(() => {
     const loadRooms = async () => {
@@ -242,15 +274,22 @@ export default function RoomBooking() {
 
     try {
       if (!selectedRoom) throw new Error('Room not found');
+
       const checkIn = `${form.date} ${form.time}`;
-      const checkOutDate = new Date(`${form.date}T${form.time}`);
-      if (form.stayType === 'night') checkOutDate.setDate(checkOutDate.getDate() + 1);
-      const checkOut = `${checkOutDate.getFullYear()}-${String(checkOutDate.getMonth() + 1).padStart(2, '0')}-${String(checkOutDate.getDate()).padStart(2, '0')} ${form.time}`;
+      const checkOut = `${form.outDate} ${form.outTime}`;
+
+      if (
+        new Date(`${form.outDate}T${form.outTime}`) <=
+        new Date(`${form.date}T${form.time}`)
+      ) {
+        throw new Error('Check-out time check-in ke baad ka hona chahiye.');
+      }
 
       const response = await authFetch('/room-bookings', {
         method: 'POST',
         body: JSON.stringify({
-          user_email: user.email,
+          // Form wale email par hi confirmation mail jaayegi
+          user_email: form.email || user.email,
           room_id: Number(selectedRoom.id),
           check_in: checkIn,
           check_out: checkOut,
@@ -269,6 +308,8 @@ export default function RoomBooking() {
         email: form.email,
         date: form.date,
         time: form.time,
+        outDate: form.outDate,
+        outTime: form.outTime,
         guests: form.guests,
         roomName: selectedRoom.name,
         roomPrice: `₹${currentPrice}`,
@@ -390,7 +431,7 @@ export default function RoomBooking() {
               value={form.name}
               onChange={handleChange('name')}
               placeholder="Ayush Sharma"
-              className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
+              className={inputClass}
             />
           </div>
 
@@ -405,14 +446,16 @@ export default function RoomBooking() {
               value={form.email}
               onChange={handleChange('email')}
               placeholder="you@example.com"
-              className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
+              className={inputClass}
             />
           </div>
 
+          {/* ----- Check-in ----- */}
+          <div className="text-sm text-[#B08D57] mb-2">Check-in</div>
           <div className="grid grid-cols-2 gap-3.5">
             <div className="flex flex-col gap-1.5 mb-4">
               <label htmlFor="rb-date" className="text-xs text-[#F4EFE6]/65">
-                Date
+                Check-in date
               </label>
               <input
                 id="rb-date"
@@ -420,12 +463,12 @@ export default function RoomBooking() {
                 required
                 value={form.date}
                 onChange={handleChange('date')}
-                className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
+                className={inputClass}
               />
             </div>
             <div className="flex flex-col gap-1.5 mb-4">
               <label htmlFor="rb-time" className="text-xs text-[#F4EFE6]/65">
-                Time
+                Check-in time
               </label>
               <input
                 id="rb-time"
@@ -433,7 +476,39 @@ export default function RoomBooking() {
                 required
                 value={form.time}
                 onChange={handleChange('time')}
-                className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          {/* ----- Check-out ----- */}
+          <div className="text-sm text-[#B08D57] mb-2">Check-out</div>
+          <div className="grid grid-cols-2 gap-3.5">
+            <div className="flex flex-col gap-1.5 mb-4">
+              <label htmlFor="rb-outdate" className="text-xs text-[#F4EFE6]/65">
+                Check-out date
+              </label>
+              <input
+                id="rb-outdate"
+                type="date"
+                required
+                min={form.date}
+                value={form.outDate}
+                onChange={handleChange('outDate')}
+                className={inputClass}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 mb-4">
+              <label htmlFor="rb-outtime" className="text-xs text-[#F4EFE6]/65">
+                Check-out time
+              </label>
+              <input
+                id="rb-outtime"
+                type="time"
+                required
+                value={form.outTime}
+                onChange={handleChange('outTime')}
+                className={inputClass}
               />
             </div>
           </div>
@@ -451,7 +526,7 @@ export default function RoomBooking() {
                 value={form.guests}
                 onChange={handleChange('guests')}
                 placeholder="2"
-                className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
+                className={inputClass}
               />
             </div>
             <div className="flex flex-col gap-1.5 mb-4">
@@ -462,7 +537,7 @@ export default function RoomBooking() {
                 id="rb-room"
                 value={form.room}
                 onChange={handleChange('room')}
-                className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
+                className={inputClass}
               >
                 {rooms.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -481,10 +556,10 @@ export default function RoomBooking() {
               id="rb-stayType"
               value={form.stayType}
               onChange={handleChange('stayType')}
-              className="bg-[#17110D] border border-white/10 text-[#F4EFE6] px-3 py-2.5 rounded-[3px] text-[0.95rem] focus:outline-none focus:border-[#FF7A45]"
+              className={inputClass}
             >
               <option value="night">Night only - ₹1500</option>
-              <option value="daynight">Day & Night - ₹2000</option>
+              <option value="daynight">Day &amp; Night - ₹2000</option>
             </select>
           </div>
 
@@ -518,9 +593,9 @@ export default function RoomBooking() {
               ref={confirmRef}
               className="mt-6 bg-[#C1440E]/10 border border-[#C1440E] px-4 py-3.5 rounded-[3px] text-sm opacity-0"
             >
-              Your request for {selectedRoom?.name} on {form.date} at{' '}
-              {form.time} (₹{currentPrice}) has been received and is pending
-              confirmation. We'll email {form.email} once it's confirmed.
+              Your request for {selectedRoom?.name} from {form.date} {form.time} to{' '}
+              {form.outDate} {form.outTime} (₹{currentPrice}) has been received and is
+              pending confirmation. We'll email {form.email} once it's confirmed.
             </div>
           )}
         </form>
