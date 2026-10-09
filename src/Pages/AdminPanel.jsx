@@ -1024,42 +1024,77 @@ const FoodPage = ({ data, onDelete, onEdit, onAdd }) => {
   );
 };
 
-
 /* =====================================================
-   ROOMS PAGE
+ROOMS PAGE
 ===================================================== */
 
 const RoomsPage = ({ data, onDelete, onEdit, onAdd }) => {
-  return (
-    <ManagementLayout
-      title="Rooms"
-      description="Manage hotel rooms and availability."
-      button="Add Room"
-      onAdd={onAdd}
-    >
-      <Table headers={["Room", "Price", "Facilities", "Available", "Actions"]}>
-        {data.length === 0 ? (
-          <EmptyRow colSpan={5} />
-        ) : (
-          data.map((item) => (
-            <tr key={item.id} className="border-t border-gray-800 hover:bg-gray-800/40">
-              <td className="px-5 py-4 font-medium">{item.name}</td>
-              <td className="px-5 py-4">₹{item.price}</td>
-              <td className="px-5 py-4 text-gray-400 max-w-xs">
-                {Array.isArray(item.facilities) ? item.facilities.join(", ") : "-"}
-              </td>
-              <td className="px-5 py-4">
-                <StatusBadge status={item.available ? "Available" : "Unavailable"} />
-              </td>
-              <td className="px-5 py-4">
-                <ActionButtons onEdit={() => onEdit(item)} onDelete={() => onDelete(item.id)} />
-              </td>
-            </tr>
-          ))
-        )}
-      </Table>
-    </ManagementLayout>
-  );
+return ( <ManagementLayout
+   title="Rooms"
+   description="Manage hotel rooms, pricing and availability."
+   button="Add Room"
+   onAdd={onAdd}
+ >
+<Table
+headers={[
+"Room",
+"Night Price",
+"Day Price",
+"Day & Night Price",
+"Facilities",
+"Available",
+"Actions",
+]}
+>
+{data.length === 0 ? ( <EmptyRow colSpan={7} />
+) : (
+data.map((item) => ( <tr
+           key={item.id}
+           className="border-t border-gray-800 hover:bg-gray-800/40"
+         > <td className="px-5 py-4 font-medium">
+{item.name} </td>
+
+```
+          <td className="px-5 py-4">
+            ₹{item.price ?? 0}
+          </td>
+
+          <td className="px-5 py-4">
+            ₹{item.price_day ?? 0}
+          </td>
+
+          <td className="px-5 py-4">
+            ₹{item.price_day_night ?? 0}
+          </td>
+
+          <td className="px-5 py-4 text-gray-400 max-w-xs">
+            {Array.isArray(item.facilities)
+              ? item.facilities.join(", ")
+              : "-"}
+          </td>
+
+          <td className="px-5 py-4">
+            <StatusBadge
+              status={
+                item.available ? "Available" : "Unavailable"
+              }
+            />
+          </td>
+
+          <td className="px-5 py-4">
+            <ActionButtons
+              onEdit={() => onEdit(item)}
+              onDelete={() => onDelete(item.id)}
+            />
+          </td>
+        </tr>
+      ))
+    )}
+  </Table>
+</ManagementLayout>
+
+
+);
 };
 
 
@@ -2000,38 +2035,89 @@ const FoodModal = ({ item, close, reload, authFetch }) => {
   );
 };
 
-
 /* =====================================================
-   ROOM MODAL
+   ROOM MODAL — ADD / EDIT ROOM
+   Three separate prices: Night, Day, Day & Night
 ===================================================== */
 
 const RoomModal = ({ item, close, reload, authFetch }) => {
   const [form, setForm] = useState({
-    name: item?.name || "",
-    description: item?.description || "",
-    price: item?.price || "",
-    image: item?.image || "",
-    facilities: Array.isArray(item?.facilities) ? item.facilities.join(", ") : "",
+    name: item?.name ?? "",
+    description: item?.description ?? "",
+
+    // Night price
+    price: item?.price ?? "",
+
+    // Day price
+    price_day: item?.price_day ?? "",
+
+    // Day & Night price
+    price_day_night: item?.price_day_night ?? "",
+
+    image: item?.image ?? "",
+
+    facilities: Array.isArray(item?.facilities)
+      ? item.facilities.join(", ")
+      : "",
+
     available: item?.available ?? true,
   });
 
   const [saving, setSaving] = useState(false);
 
+  const updateField = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+
+    if (saving) return;
+
+    const prices = [
+      ["Night Price", form.price],
+      ["Day Price", form.price_day],
+      ["Day & Night Price", form.price_day_night],
+    ];
+
+    for (const [label, value] of prices) {
+      if (
+        value === "" ||
+        !Number.isFinite(Number(value)) ||
+        Number(value) < 0
+      ) {
+        alert(`${label} must be a valid non-negative number.`);
+        return;
+      }
+    }
+
     setSaving(true);
 
     try {
       const body = {
-        name: form.name,
-        description: form.description,
+        name: form.name.trim(),
+        description: form.description.trim(),
+
         price: Number(form.price),
+        price_day: Number(form.price_day),
+        price_day_night: Number(form.price_day_night),
+
         image: form.image,
-        facilities: form.facilities.split(",").map((f) => f.trim()).filter(Boolean),
+
+        facilities: form.facilities
+          .split(",")
+          .map((facility) => facility.trim())
+          .filter(Boolean),
+
         available: form.available,
       };
 
-      const url = item ? `/admin/rooms/${item.id}` : "/admin/rooms";
+      const url = item
+        ? `/admin/rooms/${item.id}`
+        : "/admin/rooms";
 
       const response = await authFetch(url, {
         method: item ? "PUT" : "POST",
@@ -2041,68 +2127,166 @@ const RoomModal = ({ item, close, reload, authFetch }) => {
       const result = await response.json();
 
       if (!response.ok) {
-        alert(result.detail || "Room operation failed");
+        alert(result.detail || "Room operation failed.");
         return;
       }
 
-      close();
       await reload();
+      close();
+
+      alert(
+        item
+          ? "Room updated successfully."
+          : "Room added successfully."
+      );
     } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
+      console.error("Room save error:", error);
+      alert("Unable to save room. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <Modal title={item ? "Edit Room" : "Add Room"} close={close}>
-      <form onSubmit={submit} className="space-y-4">
+  const priceInputClass =
+    "w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl outline-none focus:border-red-500 text-white placeholder:text-gray-600";
 
-        <Input label="Room Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
+  return (
+    <Modal
+      title={item ? "Edit Room" : "Add Room"}
+      close={close}
+    >
+      <form onSubmit={submit} className="space-y-5">
+
+        <Input
+          label="Room Name"
+          value={form.name}
+          onChange={(value) => updateField("name", value)}
+        />
+
         <Input
           label="Description"
           value={form.description}
-          onChange={(value) => setForm({ ...form, description: value })}
-        />
-        <Input
-          label="Price"
-          type="number"
-          value={form.price}
-          onChange={(value) => setForm({ ...form, price: value })}
+          onChange={(value) =>
+            updateField("description", value)
+          }
         />
 
+        {/* THREE ROOM PRICES */}
+        <div className="rounded-xl border border-gray-800 bg-gray-950/50 p-4 space-y-4">
+          <div>
+            <h4 className="font-semibold text-white">
+              Room Pricing
+            </h4>
+            <p className="text-xs text-gray-500 mt-1">
+              Set a separate price for each stay type.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">
+              Night Price (₹)
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={form.price}
+              onChange={(e) =>
+                updateField("price", e.target.value)
+              }
+              placeholder="Enter night price"
+              className={priceInputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">
+              Day Price (₹)
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={form.price_day}
+              onChange={(e) =>
+                updateField("price_day", e.target.value)
+              }
+              placeholder="Enter day price"
+              className={priceInputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">
+              Day & Night Price (₹)
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={form.price_day_night}
+              onChange={(e) =>
+                updateField("price_day_night", e.target.value)
+              }
+              placeholder="Enter day and night price"
+              className={priceInputClass}
+            />
+          </div>
+        </div>
+
+        {/* ROOM IMAGE */}
         <ImageUploadField
           label="Room Image"
           value={form.image}
-          onChange={(url) => setForm({ ...form, image: url })}
+          onChange={(url) => updateField("image", url)}
           authFetch={authFetch}
         />
 
+        {/* FACILITIES */}
         <Input
           label="Facilities"
           placeholder="AC, WiFi, TV, Parking"
           value={form.facilities}
-          onChange={(value) => setForm({ ...form, facilities: value })}
+          onChange={(value) =>
+            updateField("facilities", value)
+          }
         />
 
+        {/* AVAILABILITY */}
         <label className="flex items-center gap-3 text-sm text-gray-300">
           <input
             type="checkbox"
             checked={form.available}
-            onChange={(e) => setForm({ ...form, available: e.target.checked })}
+            onChange={(e) =>
+              updateField("available", e.target.checked)
+            }
             className="w-4 h-4 accent-red-600"
           />
           Available
         </label>
 
-        <SubmitButton text={saving ? "Saving..." : item ? "Update Room" : "Add Room"} disabled={saving} />
+        {/* SAVE BUTTON */}
+        <SubmitButton
+          text={
+            saving
+              ? "Saving..."
+              : item
+              ? "Update Room"
+              : "Add Room"
+          }
+          disabled={saving}
+        />
 
       </form>
     </Modal>
   );
 };
-
 
 /* =====================================================
    COMMON COMPONENTS

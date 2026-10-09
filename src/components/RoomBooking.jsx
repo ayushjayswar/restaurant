@@ -8,6 +8,11 @@ import { sendRoomBooking } from '../services/EmailService';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Backend URL. Tunnel ka URL badle to .env me VITE_API_URL set karo.
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'https://lcd-dressing-jim-oven.trycloudflare.com';
+
 // Hotel mein sirf ek hi type ka room hai
 const DEFAULT_FACILITIES = ['AC', 'WiFi', 'Separate Lat-Bath'];
 
@@ -17,6 +22,7 @@ const ROOMS_FALLBACK = [
     name: 'Room',
     capacity: '2 Adults + 1 Child',
     nightPrice: 1500,
+    dayPrice: 1500,
     dayNightPrice: 2500,
     facilities: DEFAULT_FACILITIES,
     description: 'A comfortable AC room with WiFi and a separate lat-bath. Great for solo travelers, couples and small families.',
@@ -59,7 +65,7 @@ export default function RoomBooking() {
     guests: '',
     roomsCount: 1,
     room: ROOMS_FALLBACK[0].id,
-    stayType: 'night', // 'night' ya 'daynight'
+    stayType: 'night', // 'night' | 'day' | 'daynight'
   });
   const [status, setStatus] = useState('idle'); // idle | sending | reserved
   const [error, setError] = useState('');
@@ -85,7 +91,7 @@ export default function RoomBooking() {
   useEffect(() => {
     const loadRooms = async () => {
       try {
-        const response = await fetch('https://lcd-dressing-jim-oven.trycloudflare.com/rooms');
+        const response = await fetch(`${API_URL}/rooms`);
         if (!response.ok) throw new Error('Rooms fetch failed');
         const result = await response.json();
         const base = ROOMS_FALLBACK[0];
@@ -93,7 +99,12 @@ export default function RoomBooking() {
           id: room.id,
           name: room.name || base.name,
           capacity: room.capacity || base.capacity,
+          // Admin panel se teen prices:
+          //   price            -> Night
+          //   price_day        -> Day
+          //   price_day_night  -> Day & Night
           nightPrice: Number(room.price || base.nightPrice),
+          dayPrice: Number(room.price_day || room.price || base.dayPrice),
           dayNightPrice: Number(room.price_day_night || base.dayNightPrice),
           facilities:
             Array.isArray(room.facilities) && room.facilities.length > 0
@@ -115,7 +126,11 @@ export default function RoomBooking() {
 
   const selectedRoom = rooms.find((r) => String(r.id) === String(form.room));
   const currentPrice =
-    form.stayType === 'night' ? selectedRoom?.nightPrice : selectedRoom?.dayNightPrice;
+    form.stayType === 'night'
+      ? selectedRoom?.nightPrice
+      : form.stayType === 'day'
+      ? selectedRoom?.dayPrice
+      : selectedRoom?.dayNightPrice;
   const roomsCount = Math.max(1, Number(form.roomsCount) || 1);
 
   // Din/raat ginti: check-in se check-out tak har poore 24 ghante = 1 din (kam se kam 1)
@@ -324,6 +339,7 @@ export default function RoomBooking() {
           check_out: checkOut,
           guests: Number(form.guests),
           rooms_count: roomsCount,
+          stay_type: form.stayType,
           total_amount: totalAmount,
         }),
       });
@@ -376,8 +392,8 @@ export default function RoomBooking() {
           Book Your Room
         </h1>
         <p className="rb-subtitle relative z-10 mt-6 max-w-[42ch] text-[#F4EFE6]/75 text-[1.05rem] leading-relaxed">
-          Comfortable rooms at simple, honest pricing. Night stay at ₹1500,
-          or Day &amp; Night stay at ₹2500.
+          Comfortable rooms at simple, honest pricing. Choose a night stay,
+          a day stay, or a Day &amp; Night stay.
         </p>
         <div className="rb-hero-cta relative z-10 mt-9">
           <button
@@ -423,9 +439,12 @@ export default function RoomBooking() {
                 ))}
               </div>
 
-              <div className="flex gap-4 text-sm">
+              <div className="flex flex-wrap gap-3 text-sm">
                 <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-[3px]">
                   Night: <strong className="text-[#FF7A45]">₹{room.nightPrice}</strong>
+                </span>
+                <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-[3px]">
+                  Day: <strong className="text-[#FF7A45]">₹{room.dayPrice}</strong>
                 </span>
                 <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-[3px]">
                   Day &amp; Night: <strong className="text-[#FF7A45]">₹{room.dayNightPrice}</strong>
@@ -596,8 +615,9 @@ export default function RoomBooking() {
               onChange={handleChange('stayType')}
               className={inputClass}
             >
-              <option value="night">Night only - ₹1500</option>
-              <option value="daynight">Day &amp; Night - ₹2000</option>
+              <option value="night">Night only - ₹{selectedRoom?.nightPrice}</option>
+              <option value="day">Day only - ₹{selectedRoom?.dayPrice}</option>
+              <option value="daynight">Day &amp; Night - ₹{selectedRoom?.dayNightPrice}</option>
             </select>
           </div>
 
