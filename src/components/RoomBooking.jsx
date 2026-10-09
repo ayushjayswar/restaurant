@@ -103,7 +103,16 @@ export default function RoomBooking() {
   const currentPrice =
     form.stayType === 'night' ? selectedRoom?.nightPrice : selectedRoom?.dayNightPrice;
   const roomsCount = Math.max(1, Number(form.roomsCount) || 1);
-  const totalAmount = Number(currentPrice || 0) * roomsCount;
+
+  // Din/raat ginti: check-in se check-out tak har poore 24 ghante = 1 din (kam se kam 1)
+  const stayMs =
+    form.date && form.time && form.outDate && form.outTime
+      ? new Date(`${form.outDate}T${form.outTime}`) - new Date(`${form.date}T${form.time}`)
+      : 0;
+  const days = stayMs > 0 ? Math.ceil(stayMs / (24 * 60 * 60 * 1000)) : 1;
+
+  // Total = room price x din x rooms
+  const totalAmount = Number(currentPrice || 0) * days * roomsCount;
 
   // ===================== GSAP START =====================
   useLayoutEffect(() => {
@@ -319,6 +328,7 @@ export default function RoomBooking() {
         outTime: form.outTime,
         guests: form.guests,
         roomsCount,
+        days,
         roomName: selectedRoom.name,
         roomPrice: `₹${totalAmount}`,
       }).catch((err) => console.error('Room notification error:', err));
@@ -591,7 +601,7 @@ export default function RoomBooking() {
             <span className="text-sm text-[#F4EFE6]/70">
               Total amount
               <span className="block text-xs text-[#F4EFE6]/50">
-                ₹{currentPrice} × {roomsCount} {roomsCount === 1 ? 'room' : 'rooms'}
+                ₹{currentPrice} × {days} {days === 1 ? 'day' : 'days'} × {roomsCount} {roomsCount === 1 ? 'room' : 'rooms'}
               </span>
             </span>
             <span className="text-lg font-semibold text-[#FF7A45]">₹{totalAmount}</span>
@@ -622,7 +632,7 @@ export default function RoomBooking() {
               ref={confirmRef}
               className="mt-6 bg-[#C1440E]/10 border border-[#C1440E] px-4 py-3.5 rounded-[3px] text-sm opacity-0"
             >
-              Your request for {roomsCount} × {selectedRoom?.name} from {form.date} {form.time} to{' '}
+              Your request for {roomsCount} × {selectedRoom?.name} ({days} {days === 1 ? 'day' : 'days'}) from {form.date} {form.time} to{' '}
               {form.outDate} {form.outTime} (₹{totalAmount}) has been received and is
               pending confirmation. We'll email {form.email} once it's confirmed.
             </div>
