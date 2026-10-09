@@ -48,6 +48,7 @@ export default function RoomBooking() {
     outDate: '',  // check-out date
     outTime: '',  // check-out time
     guests: '',
+    roomsCount: 1,
     room: ROOMS_FALLBACK[0].id,
     stayType: 'night', // 'night' ya 'daynight'
   });
@@ -101,6 +102,8 @@ export default function RoomBooking() {
   const selectedRoom = rooms.find((r) => String(r.id) === String(form.room));
   const currentPrice =
     form.stayType === 'night' ? selectedRoom?.nightPrice : selectedRoom?.dayNightPrice;
+  const roomsCount = Math.max(1, Number(form.roomsCount) || 1);
+  const totalAmount = Number(currentPrice || 0) * roomsCount;
 
   // ===================== GSAP START =====================
   useLayoutEffect(() => {
@@ -274,6 +277,9 @@ export default function RoomBooking() {
 
     try {
       if (!selectedRoom) throw new Error('Room not found');
+      if (!Number.isInteger(roomsCount) || roomsCount < 1) {
+        throw new Error('Kam se kam 1 room select karo.');
+      }
 
       const checkIn = `${form.date} ${form.time}`;
       const checkOut = `${form.outDate} ${form.outTime}`;
@@ -294,7 +300,8 @@ export default function RoomBooking() {
           check_in: checkIn,
           check_out: checkOut,
           guests: Number(form.guests),
-          total_amount: Number(currentPrice),
+          rooms_count: roomsCount,
+          total_amount: totalAmount,
         }),
       });
       const result = await response.json();
@@ -311,8 +318,9 @@ export default function RoomBooking() {
         outDate: form.outDate,
         outTime: form.outTime,
         guests: form.guests,
+        roomsCount,
         roomName: selectedRoom.name,
-        roomPrice: `₹${currentPrice}`,
+        roomPrice: `₹${totalAmount}`,
       }).catch((err) => console.error('Room notification error:', err));
 
       const tl = gsap.timeline({ onComplete: () => setStatus('reserved') });
@@ -531,7 +539,7 @@ export default function RoomBooking() {
             </div>
             <div className="flex flex-col gap-1.5 mb-4">
               <label htmlFor="rb-room" className="text-xs text-[#F4EFE6]/65">
-                Room
+                Room type
               </label>
               <select
                 id="rb-room"
@@ -546,6 +554,22 @@ export default function RoomBooking() {
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5 mb-4">
+            <label htmlFor="rb-roomsCount" className="text-xs text-[#F4EFE6]/65">
+              Number of rooms
+            </label>
+            <input
+              id="rb-roomsCount"
+              type="number"
+              min="1"
+              step="1"
+              required
+              value={form.roomsCount}
+              onChange={handleChange('roomsCount')}
+              className={inputClass}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5 mb-4">
@@ -564,8 +588,13 @@ export default function RoomBooking() {
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-[3px] px-4 py-3 mb-4 flex justify-between items-center">
-            <span className="text-sm text-[#F4EFE6]/70">Total amount</span>
-            <span className="text-lg font-semibold text-[#FF7A45]">₹{currentPrice}</span>
+            <span className="text-sm text-[#F4EFE6]/70">
+              Total amount
+              <span className="block text-xs text-[#F4EFE6]/50">
+                ₹{currentPrice} × {roomsCount} {roomsCount === 1 ? 'room' : 'rooms'}
+              </span>
+            </span>
+            <span className="text-lg font-semibold text-[#FF7A45]">₹{totalAmount}</span>
           </div>
 
           <hr className="border-t border-dashed border-white/10 my-6" />
@@ -593,8 +622,8 @@ export default function RoomBooking() {
               ref={confirmRef}
               className="mt-6 bg-[#C1440E]/10 border border-[#C1440E] px-4 py-3.5 rounded-[3px] text-sm opacity-0"
             >
-              Your request for {selectedRoom?.name} from {form.date} {form.time} to{' '}
-              {form.outDate} {form.outTime} (₹{currentPrice}) has been received and is
+              Your request for {roomsCount} × {selectedRoom?.name} from {form.date} {form.time} to{' '}
+              {form.outDate} {form.outTime} (₹{totalAmount}) has been received and is
               pending confirmation. We'll email {form.email} once it's confirmed.
             </div>
           )}
