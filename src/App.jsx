@@ -11,7 +11,7 @@ import Contact from './components/Contact';
 import RoomBooking from './components/RoomBooking';
 import ScrollToTop from "./components/ScrollToTop";
 import InstallPrompt from "./components/Installprompt";
-import ChatWidget from "./components/ChatWidget";
+import ChatWidget from "./components/Chatwidget";
 
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
