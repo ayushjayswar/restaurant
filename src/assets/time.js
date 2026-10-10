@@ -19,4 +19,17 @@ export const timeOptions = [
   { value: '17:00', label: '05:00 PM' },
   { value: '17:30', label: '05:30 PM' },
   { value: '18:00', label: '06:00 PM' },
+  { value: '18:30', label: '06:30 PM' },
+  { value: '19:00', label: '07:00 PM' },
+  { value: '19:30', label: '07:30 PM' },
+  { value: '20:00', label: '08:00 PM' },
+  { value: '20:30', label: '08:30 PM' },
+  { value: '21:00', label: '09:00 PM' },
+  { value: '21:30', label: '09:30 PM' },
+  { value: '22:00', label: '10:00 PM' },
+  { value: '22:30', label: '10:30 PM' },
+  { value: '23:00', label: '11:00 PM' },
+  { value: '23:30', label: '11:30 PM' },
+  { value: '24:00', label: '12:00 PM' },
+ 
 ];
