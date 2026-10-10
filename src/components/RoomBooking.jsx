@@ -380,7 +380,7 @@ export default function RoomBooking() {
       className="bg-[#17110D] text-[#F4EFE6] font-[Inter,system-ui,sans-serif] overflow-x-hidden"
     >
       {/* ---------- Hero ---------- */}
-      <section className="relative min-h-[50vh] flex flex-col items-center justify-center text-center px-6 py-3 border-b border-white/10">
+      <section className="relative min-h-[50vh] flex flex-col items-center justify-center text-center px-6  border-b border-white/10">
         <div ref={particlesRef} className="absolute inset-0 overflow-hidden pointer-events-none" />
         <div className="relative z-10 text-[#B08D57] text-sm tracking-wide mb-4">
           Fork &amp; Flame · Room Booking
@@ -391,11 +391,11 @@ export default function RoomBooking() {
         >
           Book Your Room
         </h1>
-        <p className="rb-subtitle relative z-10 mt-6 max-w-[42ch] text-[#F4EFE6]/75 text-[1.05rem] leading-relaxed">
+        <p className="rb-subtitle relative z-10  max-w-[82ch] text-[#F4EFE6]/75 text-[1.05rem] leading-relaxed">
           Comfortable rooms at simple, honest pricing. Choose a night stay,
           a day stay, or a Day &amp; Night stay.
         </p>
-        <div className="rb-hero-cta relative z-10 mt-9">
+        <div className="rb-hero-cta relative z-10 mt-5">
           <button
             className="inline-flex items-center gap-2 bg-[#C1440E] hover:bg-[#FF7A45] text-[#F4EFE6] px-7 py-3.5 rounded-[3px] text-[0.95rem] font-medium transition-all duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF7A45] focus-visible:outline-offset-2"
             onClick={() =>
