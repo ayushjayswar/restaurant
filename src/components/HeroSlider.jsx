@@ -1,91 +1,297 @@
+import React, { useEffect, useState } from "react";
+import { motion } from "motion/react";
 
-import { useEffect, useState } from "react";
+import { alignFromX, fluidFont, getAnimation, placeStyle } from "./blockUtils";
 
-const slides = [
-  {
-    image: "/images/slider1.jpg",
-    title: "Welcome to Fork&Flame",
-    subtitle: "An unforgettable dining experience",
-  },
-  {
-    image: "/images/slider2.jpg",
-    title: "Taste Something Special",
-    subtitle: "Discover flavours made with passion",
-  },
-  {
-    image: "/images/slider3.jpg",
-    title: "Where Taste Meets Elegance",
-    subtitle: "Every meal tells a story",
-  },
-  {
-    image: "/images/slider4.jpg",
-    title: "Moments Worth Sharing",
-    subtitle: "Enjoy great food and beautiful moments",
-  },
-  {
-    image: "/images/slider5.jpg",
-    title: "Your Table Awaits",
-    subtitle: "Make your next visit memorable",
-  },
-];
+// Slider ki image purane format (sirf url string) ya naye format ({url, title, subtitle}) dono me ho sakti hai
+const slideOf = (item) =>
+  typeof item === "string"
+    ? { url: item, title: "", subtitle: "" }
+    : { url: item?.url || "", title: item?.title || "", subtitle: item?.subtitle || "" };
 
-export default function HeroSlider() {
-  const [active, setActive] = useState(0);
+// Typing effect: text ek ek akshar karke aata hai
+const Typewriter = ({ text }) => {
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
+    setCount(0);
+
     const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % slides.length);
-    }, 5000);
+      setCount((prev) => {
+        if (prev >= text.length) {
+          clearInterval(timer);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 70);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [text]);
 
   return (
-    <section className="relative h-[420px] w-full overflow-hidden bg-stone-950 md:h-[480px]">
-      {slides.map((slide, index) => (
+    <>
+      {text.slice(0, count)}
+      <span className="animate-pulse">|</span>
+    </>
+  );
+};
+
+// Hero me element jaldi dikhta hai, isliye whileInView ki jagah animate use hota hai
+const Reveal = ({ type, delay = 0, as = "div", className = "", style, children }) => {
+  const anim = getAnimation(type);
+  const Tag = motion[as];
+
+  if (!anim) {
+    const Plain = as;
+    return (
+      <Plain className={className} style={style}>
+        {children}
+      </Plain>
+    );
+  }
+
+  return (
+    <Tag
+      className={className}
+      style={style}
+      initial={anim.initial}
+      animate={anim.visible}
+      transition={{ duration: 0.8, delay, ease: "easeOut" }}
+    >
+      {children}
+    </Tag>
+  );
+};
+
+// slider = { title, titleAnimation, overlayHeading, overlaySubtext, overlayX, interval, images[] }
+// children = hero ke neeche overlay hone wala content (jaise search bar)
+const SliderView = ({ slider, fullScreen = false, children }) => {
+  const images = (slider?.images || []).map(slideOf).filter((slide) => slide.url);
+  const [active, setActive] = useState(0);
+
+  const intervalSeconds = slider?.interval || 5;
+
+  useEffect(() => {
+    if (images.length < 2) return undefined;
+
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % images.length);
+    }, intervalSeconds * 1000);
+
+    return () => clearInterval(timer);
+  }, [images.length, intervalSeconds]);
+
+  const current = images.length ? active % images.length : 0;
+
+  // Har image ka apna title / subtitle (purani slides jaisa)
+  const slideTitle = images[current]?.title || "";
+  const slideSubtitle = images[current]?.subtitle || "";
+  const hasSlideText = Boolean(slideTitle || slideSubtitle);
+
+  const title = slider?.title || "";
+  const titleAnimation = slider?.titleAnimation || "slide-up";
+
+  const overlayHeading = slider?.overlayHeading || "";
+  const overlaySubtext = slider?.overlaySubtext || "";
+  const overlayX = slider?.overlayX ?? 50;
+
+  // typing sirf title ke liye hai, overlay text me slide-up use hoga
+  const overlayAnimation = titleAnimation === "typing" ? "slide-up" : titleAnimation;
+
+  return (
+    <section
+      className={`relative w-full overflow-hidden bg-stone-950 ${
+        fullScreen ? "h-[100svh] min-h-[600px]" : "h-[420px] md:h-[520px]"
+      }`}
+    >
+      {/* IMAGES */}
+      {images.map((slide, index) => (
         <div
-          key={slide.image}
-          aria-hidden={active !== index}
+          key={`${slide.url}-${index}`}
+          aria-hidden={current !== index}
           className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
-            active === index
-              ? "z-10 opacity-100"
-              : "pointer-events-none z-0 opacity-0"
+            current === index ? "z-10 opacity-100" : "pointer-events-none z-0 opacity-0"
           }`}
-          style={{ backgroundImage: `url("${slide.image}")` }}
+          style={{ backgroundImage: `url("${slide.url}")` }}
+        />
+      ))}
+
+      {/* dark layer, taaki text aur navbar padhne me aaye */}
+      <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/60 via-black/20 to-black/45" />
+
+      {/* TITLE: slider ke upar, center me */}
+      {title && (
+        <div
+          className={`absolute inset-x-0 z-20 px-6 text-center ${
+            fullScreen ? "top-24 md:top-28" : "top-8 md:top-10"
+          }`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
+          <h2
+            className="font-bold tracking-tight text-white drop-shadow-lg"
+            style={{ fontSize: fluidFont(56) }}
+          >
+            {titleAnimation === "typing" ? (
+              <Typewriter text={title} />
+            ) : (
+              <Reveal type={titleAnimation} as="span" className="inline-block">
+                {title}
+              </Reveal>
+            )}
+          </h2>
+        </div>
+      )}
 
-          <div className="absolute inset-0 flex items-center px-6 sm:px-12 md:px-20">
-            <div className="max-w-3xl text-white">
-              <h1 className="mb-4 text-3xl font-bold leading-tight sm:text-5xl md:text-6xl">
-                {slide.title}
-              </h1>
+      {/* OVERLAY TEXT: admin ke slider se left / center / right */}
+      {!hasSlideText && (overlayHeading || overlaySubtext) && (
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 md:px-16">
+          <div style={{ textAlign: alignFromX(overlayX) }}>
+            <div style={{ ...placeStyle(overlayX), maxWidth: "min(100%, 48rem)" }}>
+              {overlayHeading && (
+                <Reveal
+                  type={overlayAnimation}
+                  delay={0.2}
+                  as="h3"
+                  className="mb-3 font-bold leading-tight text-white drop-shadow-lg"
+                  style={{ fontSize: fluidFont(44) }}
+                >
+                  {overlayHeading}
+                </Reveal>
+              )}
 
-              <p className="text-base text-white/90 sm:text-xl">
-                {slide.subtitle}
-              </p>
+              {overlaySubtext && (
+                <Reveal
+                  type={overlayAnimation}
+                  delay={0.4}
+                  as="p"
+                  className="whitespace-pre-line text-white/90 drop-shadow-md"
+                  style={{ fontSize: fluidFont(22) }}
+                >
+                  {overlaySubtext}
+                </Reveal>
+              )}
             </div>
           </div>
         </div>
-      ))}
+      )}
 
-      {/* Five dots at bottom center */}
-      <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3">
-        {slides.map((slide, index) => (
-          <button
-            key={slide.image}
-            type="button"
-            onClick={() => setActive(index)}
-            aria-label={`Show slide ${index + 1}`}
-            aria-current={active === index ? "true" : undefined}
-            className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${
-              active === index
-                ? "w-7 bg-orange-500"
-                : "w-2.5 bg-white/70 hover:bg-white"
-            }`}
-          />
-        ))}
-      </div>
+      {/* HAR IMAGE KA APNA TEXT: slide badalne par naya text animation ke saath aata hai */}
+      {hasSlideText && (
+        <div
+          key={`slide-text-${current}`}
+          className="pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 md:px-16"
+        >
+          <div style={{ textAlign: alignFromX(overlayX) }}>
+            <div style={{ ...placeStyle(overlayX), maxWidth: "min(100%, 48rem)" }}>
+              {slideTitle && (
+                <Reveal
+                  type={overlayAnimation}
+                  as="h3"
+                  className="mb-3 font-bold leading-tight text-white drop-shadow-lg"
+                  style={{ fontSize: fluidFont(52) }}
+                >
+                  {slideTitle}
+                </Reveal>
+              )}
+
+              {slideSubtitle && (
+                <Reveal
+                  type={overlayAnimation}
+                  delay={0.2}
+                  as="p"
+                  className="whitespace-pre-line text-white/90 drop-shadow-md"
+                  style={{ fontSize: fluidFont(22) }}
+                >
+                  {slideSubtitle}
+                </Reveal>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CHILDREN (search bar) */}
+      {children && (
+        <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-50 sm:px-6">{children}</div>
+      )}
+
+      {/* DOTS */}
+      {images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3">
+          {images.map((_, index) => (
+            <button
+              key={`dot-${index}`}
+              type="button"
+              onClick={() => setActive(index)}
+              aria-label={`Show image ${index + 1}`}
+              aria-current={current === index ? "true" : undefined}
+              className={`h-2.5 rounded-full transition-all duration-300 ${
+                current === index ? "w-7 bg-orange-500" : "w-2.5 bg-white/70 hover:bg-white"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
-}
+};
+
+// Tunnel ka URL badle to .env me VITE_API_URL set karo.
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://lcd-dressing-jim-oven.trycloudflare.com";
+
+// Home page me jaise pehle <HeroSlider /> lagta tha, waise hi lagao.
+// Admin > Home ke sliders yeh khud backend se leta hai aur ek ke neeche ek dikhata hai.
+// Agar kisi ko direct data dena ho to <HeroSlider slider={...} /> bhi chalega.
+const HeroSlider = ({ slider, fullScreen, children }) => {
+  const [sliders, setSliders] = useState([]);
+
+  useEffect(() => {
+    if (slider) return undefined;
+
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const response = await fetch(`${API_URL}/content`);
+        if (!response.ok) return;
+
+        const result = await response.json();
+        const list = result?.hero?.sliders;
+
+        if (!cancelled && Array.isArray(list)) {
+          setSliders(list.filter((s) => (s.images || []).some((img) => slideOf(img).url) || s.title));
+        }
+      } catch (err) {
+        console.error("Slider fetch error:", err);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slider]);
+
+  if (slider) {
+    return (
+      <SliderView slider={slider} fullScreen={fullScreen}>
+        {children}
+      </SliderView>
+    );
+  }
+
+  if (sliders.length === 0) return null;
+
+  return (
+    <>
+      {sliders.map((item, index) => (
+        <SliderView key={item.id || index} slider={item} />
+      ))}
+    </>
+  );
+};
+
+export default HeroSlider;
