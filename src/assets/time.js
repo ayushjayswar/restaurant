@@ -30,6 +30,6 @@ export const timeOptions = [
   { value: '22:30', label: '10:30 PM' },
   { value: '23:00', label: '11:00 PM' },
   { value: '23:30', label: '11:30 PM' },
-  { value: '24:00', label: '12:00 PM' },
+  { value: '24:00', label: '12:00 AM' },
  
 ];
