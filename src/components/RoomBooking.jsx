@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -44,6 +44,7 @@ const inputClass =
 
 export default function RoomBooking() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { requireAuth, user, authFetch } = useAuth();
   const [rooms, setRooms] = useState(ROOMS_FALLBACK);
 
@@ -54,6 +55,7 @@ export default function RoomBooking() {
   const ticketRef = useRef(null);
   const stampRef = useRef(null);
   const confirmRef = useRef(null);
+  const keepOutDate = useRef(false); // true sirf tab jab Home search bar se check-out date aayi ho
 
   const [form, setForm] = useState({
     name: '',
@@ -77,13 +79,32 @@ export default function RoomBooking() {
     }
   }, [user]);
 
+  // Home page ke search bar se aaye dates / guests pehle se bhar do
+  useEffect(() => {
+    const ci = searchParams.get('checkin');
+    const co = searchParams.get('checkout');
+    const g = searchParams.get('guests');
+    if (!ci && !co && !g) return;
+    if (co) keepOutDate.current = true;
+    setForm((f) => ({
+      ...f,
+      date: ci || f.date,
+      outDate: co || f.outDate,
+      guests: g || f.guests,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Check-in choose karte hi check-out agle din usi time par auto-fill hota hai.
   // User chahe to check-out date/time baad mein edit kar sakta hai.
   useEffect(() => {
     if (!form.date) return;
     setForm((f) => ({
       ...f,
-      outDate: nextDay(f.date),
+      outDate:
+        keepOutDate.current && f.outDate && f.outDate > f.date
+          ? f.outDate
+          : nextDay(f.date),
       outTime: f.time || f.outTime,
     }));
   }, [form.date, form.time]);
