@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 
-import { alignFromX, fluidFont, getAnimation, placeStyle } from "./blockUtils";
+import { alignFromX, fluidFont, getAnimation, placeStyle } from "./Blockutils";
+
 
 // Slider ki image purane format (sirf url string) ya naye format ({url, title, subtitle}) dono me ho sakti hai
 const slideOf = (item) =>

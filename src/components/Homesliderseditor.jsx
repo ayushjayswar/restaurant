@@ -3,7 +3,8 @@ import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 
 import ImageUploadField from "./Imageuploadfield";
 import SliderControl from "./Slidercontrol";
-import { TITLE_ANIMATIONS, uid } from "./blockUtils";
+import { TITLE_ANIMATIONS, uid } from "./Blockutils";
+
 
 // Slider ki image purane format (sirf url string) ya naye format ({url, title, subtitle}) dono me ho sakti hai
 const slideOf = (item) =>

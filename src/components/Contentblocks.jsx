@@ -9,7 +9,8 @@ import {
   normalizeMedia,
   normalizeTextOnly,
   placeStyle,
-} from "./blockUtils";
+} from "./Blockutils";
+
 
 // Scroll karne par animation. Sab blocks yahi use karte hain.
 const Anim = ({ type = "fade", delay = 0, as = "div", className = "", style, children }) => {

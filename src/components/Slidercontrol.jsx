@@ -55,3 +55,4 @@ const SliderControl = ({
 };
 
 export default SliderControl;
+

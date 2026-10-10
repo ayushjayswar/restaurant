@@ -10,7 +10,8 @@ import {
   makeBlock,
   normalizeMedia,
   normalizeTextOnly,
-} from "./blockUtils";
+} from "./Blockutils";
+
 
 const BLOCK_TYPES = [
   { value: "image", label: "Image only" },
