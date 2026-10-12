@@ -433,7 +433,7 @@ export default function RoomBooking() {
       </section>
 
       {/* ---------- Room panels ---------- */}
-      <section className="py-16">
+      <section className="">
         {rooms.map((room, i) => (
           <div
             key={room.id}
