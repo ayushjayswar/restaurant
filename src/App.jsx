@@ -8,6 +8,7 @@ import About from './components/About';
 import Menu from './components/Menu';
 import Reservation from './components/Reservation';
 import Contact from './components/Contact';
+import Rooms from './components/Rooms';
 import RoomBooking from './components/RoomBooking';
 import ScrollToTop from "./components/ScrollToTop";
 import InstallPrompt from "./components/Installprompt";
@@ -64,6 +65,7 @@ const App = () => {
           <Route path="/about" element={<About />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/reservation" element={<Reservation />} />
+          <Route path="/rooms" element={<Rooms />} />
           <Route path="/roombooking" element={<RoomBooking />} />
           <Route path="/contact" element={<Contact />} />
 
