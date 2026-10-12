@@ -1,6 +1,6 @@
 {
-  "name": "Fork & Flame",
-  "short_name": "Fork & Flame",
+  "name": "ShreeHotel",
+  "short_name": "ShreeHotel",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -14,7 +14,7 @@
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#111827",
-  "description": "Fork & Flame - Restaurant, Table Reservation and Room Booking",
+  "description": "ShreeHotel - Restaurant, Table Reservation and Room Booking",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",

@@ -1,4 +1,4 @@
-const CACHE_NAME = "fork-flame-v1";
+const CACHE_NAME = "ShreeHotel-v1";
 
 const APP_SHELL = [
   "/",
