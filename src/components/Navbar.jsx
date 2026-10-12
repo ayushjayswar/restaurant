@@ -425,7 +425,7 @@ const Navbar = () => {
 
                         <h1 className='whitespace-nowrap text-[#ff4d4d]'>
 
-                            For&amp;<span className='text-[#F4EFE6]'>Flame</span>
+                            Shree&amp;<span className='text-[#F4EFE6]'>Hotel</span>
 
                         </h1>
 
