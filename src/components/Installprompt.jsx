@@ -20,8 +20,8 @@ const InstallPrompt = () => {
     const handleInstall = () => {
         // APK download trigger karega
         const link = document.createElement('a')
-        link.href = '/ForkFlame.apk'
-        link.download = 'ForkFlame.apk'
+        link.href = '/ShreeHotel.apk'
+        link.download = 'ShreeHotel.apk'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -56,7 +56,7 @@ const InstallPrompt = () => {
 
                         <div className='min-w-0'>
                             <p className='font-bold text-white text-sm sm:text-base truncate'>
-                                Fork&Flame App
+                                Shree Hotel App
                             </p>
                             <p className='text-xs sm:text-sm text-orange-50 truncate'>
                                 Faster booking, exclusive offers &amp; more
