@@ -13,9 +13,9 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   'https://lcd-dressing-jim-oven.trycloudflare.com';
 
-// Hotel mein sirf ek hi type ka room hai
 const DEFAULT_FACILITIES = ['AC', 'WiFi', 'Separate Lat-Bath'];
 
+// Backend se rooms aane tak (ya fail hone par) ye ek room dikhega
 const ROOMS_FALLBACK = [
   {
     id: 1,
@@ -116,7 +116,10 @@ export default function RoomBooking() {
         if (!response.ok) throw new Error('Rooms fetch failed');
         const result = await response.json();
         const base = ROOMS_FALLBACK[0];
-        const backendRooms = (result.rooms || []).slice(0, 1).map((room) => ({
+
+        // FIX: pehle yahan .slice(0, 1) tha, isse sirf pehla room dikhta tha.
+        // Ab admin ke saare available rooms aate hain.
+        const backendRooms = (result.rooms || []).map((room) => ({
           id: room.id,
           name: room.name || base.name,
           capacity: room.capacity || base.capacity,
@@ -265,6 +268,7 @@ export default function RoomBooking() {
   // ===================== GSAP END =====================
 
   // ===================== GSAP START =====================
+  // rooms badalne par dobara chalta hai, taaki naye rooms ke panels bhi animate hon
   useEffect(() => {
     const reduceMotion =
       typeof window !== 'undefined' &&
@@ -321,7 +325,7 @@ export default function RoomBooking() {
     }, rootRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [rooms]);
   // ===================== GSAP END =====================
 
   const handleChange = (field) => (e) =>
@@ -624,6 +628,25 @@ export default function RoomBooking() {
                 className={inputClass}
               />
             </div>
+          </div>
+
+          {/* ----- Room choose karo (naya) ----- */}
+          <div className="flex flex-col gap-1.5 mb-4">
+            <label htmlFor="rb-room" className="text-xs text-[#F4EFE6]/65">
+              Room
+            </label>
+            <select
+              id="rb-room"
+              value={form.room}
+              onChange={handleChange('room')}
+              className={inputClass}
+            >
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex flex-col gap-1.5 mb-4">
