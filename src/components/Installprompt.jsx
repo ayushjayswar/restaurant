@@ -49,7 +49,7 @@ const InstallPrompt = () => {
                         <div className='w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 shadow-md bg-white'>
                             <img
                                 src="/logo2.png"
-                                alt="Fork & Flame App"
+                                alt="Shree Hotel App"
                                 className='w-full h-full object-cover'
                             />
                         </div>
