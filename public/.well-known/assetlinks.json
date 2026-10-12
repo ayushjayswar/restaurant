@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.vercel.restaurant__new.twa",
-        "sha256_cert_fingerprints": ["44:06:A0:EF:87:C7:1C:82:CB:F8:E2:61:22:2D:44:54:20:5E:31:CB:88:3B:FB:56:96:76:B1:4D:D0:C8:D5:F9"]
+        "sha256_cert_fingerprints": ["E6:2C:96:09:C2:25:DD:FD:98:52:0C:7D:BA:5F:61:92:2D:BC:25:43:B6:8F:24:B7:8D:64:C5:77:7D:57:87:FE"]
       }
-    }]  
+    }]
